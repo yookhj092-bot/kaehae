@@ -14,7 +14,7 @@ import { isValid, type QDef } from "./questions";
 import { hsvToHex, type HSV } from "@/lib/color";
 import { EXPERIMENTS, expById, pad2 } from "@/lib/experiments";
 import { renderStoryInvite, shareCanvas } from "@/lib/shareImage";
-import { createLab, getLab, isFail, myLab, setMyLab, updateLab } from "@/lib/api";
+import { createLab, getLab, isFail, markKeySaved, myLab, setMyLab, updateLab } from "@/lib/api";
 import { BAD_MSG, isBad } from "@/lib/moderation";
 import { RETENTION_DAYS } from "@/lib/site";
 import { kakaoShareReady, shareInviteToKakao } from "@/lib/kakao";
@@ -46,6 +46,8 @@ export function AFlow() {
   const [g, setG] = useState<Record<string, unknown>>({});
   const [selfOn, setSelfOn] = useState(false);
   const [share, setShare] = useState(false);
+  const [keyKept, setKeyKept] = useState(false); // 열쇠 링크를 보관했는지
+  const [keyFail, setKeyFail] = useState(false); // 복사가 막힌 브라우저
   const [privacy, setPrivacy] = useState(false);
   const [instant, setInstant] = useState(false);
   const [ids, setIds] = useState({ lab: "", key: "" }); // 서버가 만들어 준다
@@ -87,6 +89,17 @@ export function AFlow() {
   const copy = async (text: string, msg: string) => {
     buzz(8);
     toast.show((await copyText(text)) ? msg : "복사하지 못했습니다. 길게 눌러 복사해 주세요");
+  };
+  /* 열쇠 링크 보관: 복사하거나, 공유 창으로 나에게 보낸다 */
+  const keepKey = async (how: "copy" | "send") => {
+    buzz(8);
+    if (how === "send" && navigator.share) {
+      try { await navigator.share({ title: `${nm}님의 연구소 열쇠`, text: "내 캐해 연구소 열쇠 (나만 보기)", url: keyUrl }); } catch { return; }
+      toast.show("열쇠를 보냈습니다");
+    } else if (await copyText(keyUrl)) toast.show("열쇠 링크를 복사했습니다. 메모나 나와의 채팅에 붙여 두세요");
+    else { setKeyFail(true); return toast.show("복사하지 못했습니다. 링크를 길게 눌러 복사해 주세요"); }
+    if (ids.lab) markKeySaved(ids.lab);
+    setKeyKept(true);
   };
   const onPhoto = (f?: File) => {
     if (!f) return;
@@ -277,19 +290,28 @@ export function AFlow() {
             </div>
             <div className="lab-tags">{picked.map((no) => <span key={no}>{pad2(no)} {expById(no).title}</span>)}</div>
           </motion.div>
+          <div className={cx("link-box glass key", keyKept ? "kept" : "must")}>
+            <div className="lb-head"><b>연구소 열쇠</b><span>나만 보는 비밀 링크</span>{keyKept ? <em>보관함</em> : <em className="need">먼저 보관하기</em>}</div>
+            <div className="lb-row"><code>{keyUrl.replace(/^https?:\/\//, "")}</code><button type="button" className="pressable" aria-label="열쇠 링크 복사" onClick={() => keepKey("copy")}><Icon name="copy" size={20} /></button></div>
+            <p className="warn"><b>이 링크를 잃어버리면 리포트를 다시 열 수 없습니다.</b> 로그인이 없어서 되찾아 드릴 방법이 없어요. 지금 복사해서 메모나 나와의 채팅에 붙여 두세요.</p>
+            <p>마지막 표본이 들어온 뒤 {RETENTION_DAYS}일이 지나면 연구소는 자동으로 지워집니다.</p>
+          </div>
           <div className="link-box glass">
             <div className="lb-head"><b>초대 링크</b><span>친구에게 보내는 링크</span></div>
             <div className="lb-row"><code>{inviteUrl.replace(/^https?:\/\//, "")}</code><button type="button" className="pressable" aria-label="초대 링크 복사" onClick={() => copy(inviteUrl, "초대 링크를 복사했습니다")}><Icon name="copy" size={20} /></button></div>
           </div>
-          <div className="link-box glass key">
-            <div className="lb-head"><b>연구소 열쇠</b><span>나만 보는 비밀 링크</span></div>
-            <div className="lb-row"><code>{keyUrl.replace(/^https?:\/\//, "")}</code><button type="button" className="pressable" aria-label="열쇠 링크 복사" onClick={() => copy(keyUrl, "열쇠 링크를 복사했습니다")}><Icon name="copy" size={20} /></button></div>
-            <p>로그인이 없어서, 이 링크가 있어야 리포트를 다시 열 수 있습니다. 꼭 보관해 주세요. 마지막 표본이 들어온 뒤 {RETENTION_DAYS}일이 지나면 연구소는 자동으로 지워집니다.</p>
-          </div>
         </div>
         <div className="scr-bottom">
-          <Button block iconLeft="export" onClick={() => setShare(true)} className="sheen">친구 초대하기</Button>
-          <div className="later"><TextButton size="sm" onClick={() => location.assign(`/b?lab=${ids.lab}&key=${ids.key}`)}>내 연구소로 가기</TextButton></div>
+          {keyKept ? (<>
+            <Button block iconLeft="export" onClick={() => setShare(true)} className="sheen">친구 초대하기</Button>
+            <div className="later"><TextButton size="sm" onClick={() => location.assign(`/b?lab=${ids.lab}&key=${ids.key}`)}>내 연구소로 가기</TextButton></div>
+          </>) : (<>
+            <Button block iconLeft="copy" onClick={() => keepKey("copy")} className="sheen">열쇠 링크 복사하기</Button>
+            <div className="link-row">
+              <TextButton size="sm" onClick={() => keepKey("send")}>나에게 보내기</TextButton>
+              {keyFail ? <><i /><TextButton size="sm" onClick={() => { if (ids.lab) markKeySaved(ids.lab); setKeyKept(true); }}>직접 복사했어요</TextButton></> : null}
+            </div>
+          </>)}
         </div>
       </>);
       break;

@@ -343,6 +343,11 @@ html.app-lock, html.app-lock body { overflow: hidden; overscroll-behavior: none;
 .link-box p { font-size: 12px; line-height: 16px; color: var(--gray-700); word-break: keep-all; }
 .link-box.key { box-shadow: inset 1.5px 1.5px 1px -.5px #fff, inset -1.5px -1.5px 1px -.5px rgba(255, 255, 255, .75), inset 0 0 0 1px rgba(18, 18, 18, .08); }
 .link-box .k-textbtn { align-self: flex-start; }
+.link-box .lb-head em { margin-left: auto; font-style: normal; font-size: 11px; line-height: 16px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--gray-900); color: #fff; }
+.link-box .lb-head em.need { background: var(--red-500); }
+.link-box.must { box-shadow: inset 0 0 0 1.5px var(--red-500); }
+.link-box p.warn { color: var(--gray-900); } .link-box p.warn b { color: var(--red-600); }
+.nudge.warn { box-shadow: inset 0 0 0 1.5px var(--red-500); }
 
 .share-preview { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 20px; }
 .share-preview b { display: block; font-size: 14px; line-height: 20px; word-break: keep-all; }

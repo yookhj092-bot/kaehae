@@ -19,7 +19,7 @@ import { BONUS, INTRO_GUIDE, QDEFS, ROT_A, ROT_B, dropColor, isValid } from "./q
 import { hexToRgb, hslToHex, hsvToHex, mix, nameOf, rgbToHsl, type HSV } from "@/lib/color";
 import { expById, pad2 } from "@/lib/experiments";
 import { renderCard, shareCanvas } from "@/lib/shareImage";
-import { getLab, isFail, submitSample, submitTaste } from "@/lib/api";
+import { getLab, isFail, myLab, submitSample, submitTaste } from "@/lib/api";
 import { BAD_MSG, isBad } from "@/lib/moderation";
 import { PrivacyLine, PrivacySheet } from "./Privacy";
 
@@ -83,6 +83,7 @@ export function RFlow() {
   const [cfg, setCfg] = useState<Cfg>({ a: "03", b: "08", rel: true, bonus: BONUS });
   const [ready, setReady] = useState(false); // 연구소 정보를 받은 뒤에 그린다
   const [labId, setLabId] = useState<string | null>(null); // 없으면 예시 모드
+  const [ownerUrl, setOwnerUrl] = useState<string | null>(null); // 이 기기에서 만든 연구소의 초대 링크를 주인이 연 경우
   const [sample, setSample] = useState<{ id: string; count: number } | null>(null); // 제출한 표본
   const saveKey = useRef(SAVE_KEY);
   const [a, setA] = useState<Ans>(EMPTY);
@@ -127,6 +128,8 @@ export function RFlow() {
       setReady(true);
     };
     const lab = q.get("lab");
+    const mine = myLab();
+    if (lab && mine?.lab === lab) setOwnerUrl(`/b?lab=${mine.lab}&key=${mine.key}`);
     if (!lab) {
       /* 예시 모드: 주소 옵션으로 실험 조합만 바꾼다 */
       return start({ a: ROT_A[q.get("a") ?? ""] ? q.get("a")! : "03", b: ROT_B[q.get("b") ?? ""] ? q.get("b")! : "08", rel: true, bonus: BONUS }, SAVE_KEY);
@@ -287,7 +290,7 @@ export function RFlow() {
   let content: ReactNode = null;
   switch (step) {
     case "landing":
-      content = <Hero mode="landing" onEnter={() => go("greet")} onPrivacy={() => setPrivacy(true)} />;
+      content = <Hero mode="landing" onEnter={() => go("greet")} onPrivacy={() => setPrivacy(true)} ownerUrl={ownerUrl} />;
       break;
     case "greet":
       content = <Greeting onDone={() => go("name")} />;
@@ -598,7 +601,7 @@ export function RFlow() {
 /* ================================================================ 화면 조각 */
 
 /** R-01 초대 랜딩 · R-09 붓기: 3D 플라스크 뒤로 흐릿한 색 원이 흐른다 */
-function Hero({ mode, colors = [], onEnter, onPour, onDone, onPrivacy }: { mode: "landing" | "pour"; colors?: string[]; onEnter?: () => void; onPrivacy?: () => void; onPour?: () => Promise<boolean>; onDone?: () => void }) {
+function Hero({ mode, colors = [], onEnter, onPour, onDone, onPrivacy, ownerUrl }: { mode: "landing" | "pour"; colors?: string[]; ownerUrl?: string | null; onEnter?: () => void; onPrivacy?: () => void; onPour?: () => Promise<boolean>; onDone?: () => void }) {
   const [phase, setPhase] = useState<"idle" | "merging" | "done">("idle");
   const flask = useFlaskSrc();
   const base = mode === "landing" ? ["#E0E0E0"] : colors.length ? colors : ["#E0E0E0", "#B0B8C1", "#F6F0CF"];
@@ -653,6 +656,7 @@ function Hero({ mode, colors = [], onEnter, onPour, onDone, onPrivacy }: { mode:
         {mode === "landing" ? (<>
           <Button block onClick={onEnter} className="sheen">입장하기</Button>
           <span className="hero-caption">약 5분 · 로그인 없이 참여</span>
+          {ownerUrl ? <div className="link-row"><TextButton size="sm" onClick={() => location.assign(ownerUrl)}>내 연구소입니다 · 리포트 열기</TextButton></div> : null}
           {onPrivacy ? <PrivacyLine onOpen={onPrivacy} /> : null}
         </>) : phase === "done" ? (<>
           <Button block onClick={onDone} className="sheen">접수증 확인하기</Button>

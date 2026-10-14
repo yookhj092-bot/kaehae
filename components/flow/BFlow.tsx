@@ -15,7 +15,7 @@ import { QDEFS, type QDef } from "./questions";
 import { mix } from "@/lib/color";
 import { expById, pad2 } from "@/lib/experiments";
 import { renderCard, renderStoryReport, shareCanvas, type CardKind } from "@/lib/shareImage";
-import { deleteLab, getLabFull, isFail, myLab, setMyLab, updateLab } from "@/lib/api";
+import { deleteLab, getLabFull, isFail, keySaved, markKeySaved, myLab, setMyLab, updateLab } from "@/lib/api";
 import type { Sample } from "@/lib/types";
 import { RETENTION_DAYS } from "@/lib/site";
 import { kakaoShareReady, shareInviteToKakao } from "@/lib/kakao";
@@ -70,6 +70,7 @@ export function BFlow() {
   const [menu, setMenu] = useState<{ id: string; step: "menu" | "report"; reason: number | null } | null>(null);
   const [sheet, setSheet] = useState<null | "invite">(null);
   const [open, setOpen] = useState(true); // 응답 받는 중
+  const [keyKept, setKeyKept] = useState(true); // 열쇠 링크를 보관한 적이 있는지
   const [expiresAt, setExpiresAt] = useState<number | null>(null); // 자동 삭제 예정 시각
   const [confirmDel, setConfirmDel] = useState(false);
   const [tpl, setTpl] = useState<"color" | "ing" | "quote">("color");
@@ -90,6 +91,7 @@ export function BFlow() {
       let s = d.samples.length;
       try { const raw = localStorage.getItem(`kaehae-seen-${l.lab}`); if (raw != null) s = Math.min(d.samples.length, Number(raw) || 0); else localStorage.setItem(`kaehae-seen-${l.lab}`, String(s)); } catch {}
       setSeen(s);
+      setKeyKept(keySaved(l.lab));
       setReady(true);
     }
   }, []);
@@ -312,7 +314,12 @@ export function BFlow() {
             <h2>연구소 관리</h2>
             <div className="stack-12">
               {!hasSelf ? <button type="button" className="nudge glass pressable" onClick={() => location.assign("/a?at=s_color")}><b>내가 보는 나 남기기</b><span>답해 두면 ‘나 vs 친구들’ 비교가 열립니다 · 약 40초</span><Icon name="next" size={20} /></button> : null}
-              {hasSelf ? <p className="all-set">연구소 준비가 모두 끝났습니다.</p> : null}
+              {live && !keyKept ? <button type="button" className="nudge glass pressable warn" onClick={async () => {
+                buzz(8);
+                if (!(await copyText(`${origin}/b?lab=${live.lab}&key=${live.key}`))) return toast.show("복사하지 못했습니다. 설정에서 다시 시도해 주세요");
+                markKeySaved(live.lab); setKeyKept(true); toast.show("열쇠 링크를 복사했습니다. 메모나 나와의 채팅에 붙여 두세요");
+              }}><b>열쇠 링크 보관하기</b><span>잃어버리면 다른 기기에서 연구소를 다시 열 수 없습니다. 눌러서 복사해 두세요</span><Icon name="copy" size={20} /></button> : null}
+              {hasSelf && keyKept ? <p className="all-set">연구소 준비가 모두 끝났습니다.</p> : null}
             </div>
           </section>
         </div>
@@ -564,7 +571,7 @@ export function BFlow() {
             }} label="응답 받기" /></div>
           </section>
           <section className="set-sec glass">
-            <button type="button" className="set-row pressable" onClick={() => copy(live ? `${origin}/b?lab=${live.lab}&key=${live.key}` : `${origin}/b`, "열쇠 링크를 복사했습니다")}><div><b>연구소 열쇠 복사</b><span>나만 보는 비밀 링크입니다</span></div><Icon name="copy" size={20} /></button>
+            <button type="button" className="set-row pressable" onClick={() => { copy(live ? `${origin}/b?lab=${live.lab}&key=${live.key}` : `${origin}/b`, "열쇠 링크를 복사했습니다"); if (live) { markKeySaved(live.lab); setKeyKept(true); } }}><div><b>연구소 열쇠 복사</b><span>나만 보는 비밀 링크입니다. 잃어버리면 되찾을 수 없어요</span></div><Icon name="copy" size={20} /></button>
             <button type="button" className="set-row pressable" onClick={() => setSheet("invite")}><div><b>초대 링크 보내기</b><span>친구에게 보내는 링크입니다</span></div><Icon name="export" size={20} /></button>
           </section>
           <section className="set-sec glass">

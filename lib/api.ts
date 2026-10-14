@@ -24,4 +24,7 @@ export const submitTaste = (id: string, sid: string, taste: (number | null)[]) =
 export type MyLab = { lab: string; key: string; name: string };
 const MY = "kaehae-lab-v2";
 export const myLab = (): MyLab | null => { try { return JSON.parse(localStorage.getItem(MY) ?? "null"); } catch { return null; } };
+/* 주인이 열쇠 링크를 복사(또는 내보내기)해 둔 적이 있는지. 기기에만 적어 둔다. */
+export const keySaved = (lab: string) => { try { return localStorage.getItem(`kaehae-keysaved-${lab}`) === "1"; } catch { return false; } };
+export const markKeySaved = (lab: string) => { try { localStorage.setItem(`kaehae-keysaved-${lab}`, "1"); } catch {} };
 export const setMyLab = (v: MyLab | null) => { try { if (v) localStorage.setItem(MY, JSON.stringify(v)); else localStorage.removeItem(MY); } catch {} };
