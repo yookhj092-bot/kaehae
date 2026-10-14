@@ -8,7 +8,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { AiOrb, Beaker, BottomSheet, Button, Guide, Icon, Modal, Navigation, Selection, Tabs, TextButton, Toast, buzz, copyText, cx, useToast } from "@/components/ui";
+import { Beaker, BottomSheet, Button, Guide, Icon, Modal, Navigation, Selection, Tabs, TextButton, Toast, buzz, copyText, cx, useToast } from "@/components/ui";
 import { Device } from "./Device";
 import { useFlaskSrc } from "./widgets";
 import { QDEFS, type QDef } from "./questions";
@@ -372,9 +372,9 @@ export function BFlow() {
           {n === 0 ? (
             <div className="empty-box glass"><b>아직 도착한 표본이 없습니다</b><span>한 명만 답해도 리포트가 열립니다.</span><Button size="md" onClick={() => setSheet("invite")}>친구 초대하기</Button></div>
           ) : tab === "all" ? (<>
-            {/* AI 요약은 맨 위, 연파랑 */}
+            {/* 한눈에 보기: 맨 위, 연파랑. 집계로 만든 문장이며 AI를 쓰지 않는다 */}
             <section className="rp-ai">
-              <div className="h"><AiOrb size={24} /><b>AI 요약</b><span>연구원 {n}명 기준</span></div>
+              <div className="h"><b>한눈에 보기</b><span>연구원 {n}명 기준</span></div>
               <p>
                 {charms.length ? <>친구들이 본 {name}님을 대표하는 단어는 <b>{charms.slice(0, 2).map((c) => c.label).join(", ")}</b>입니다. </> : null}
                 {withIng.length ? <>성분은 <b>{topIng[0].name} {topIng[0].v}%</b>, <b>{topIng[1].name} {topIng[1].v}%</b> 순으로 많았습니다. </> : null}
@@ -396,7 +396,7 @@ export function BFlow() {
               ))}
             </div>
           ) : self ? (<>
-            <section className="rp-ai"><div className="h"><AiOrb size={24} /><b>AI 요약</b></div>
+            <section className="rp-ai"><div className="h"><b>한눈에 보기</b></div>
               <p>
                 {selfTop && withIng.length ? <>{name}님은 스스로를 <b>{selfTop}</b> 성분이 많다고 보았지만, 친구들이 가장 크게 느낀 성분은 <b>{topIng[0].name}</b>입니다. </> : null}
                 {played.length ? <>보너스 라운드에 참여한 {played.length}명의 평균 싱크로율은 <b>{Math.round(avg(played.map((r) => syncOf(r)!)))}%</b>입니다. </> : <>아직 보너스 라운드에 참여한 연구원이 없습니다. </>}
