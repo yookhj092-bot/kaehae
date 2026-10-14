@@ -13,13 +13,20 @@ export function Device({ children }: { children: ReactNode }) {
     const vv = window.visualViewport;
     const root = document.documentElement;
     root.classList.add("app-lock");
-    let full = window.innerHeight; // 키보드가 없을 때의 높이
+    /* 키보드가 없을 때의 높이. 카카오톡 같은 앱 안 브라우저는 window.innerHeight가 위아래 막대 뒤까지 포함해
+       실제 보이는 높이보다 크게 나오므로, 보이는 영역(visualViewport) 기준으로만 잰다. */
+    let full = vv ? vv.height : window.innerHeight;
+    const typing = () => {
+      const a = document.activeElement as HTMLElement | null;
+      return !!a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA" || a.isContentEditable);
+    };
     const sync = () => {
       const h = vv ? vv.height : window.innerHeight;
       if (h > full) full = h;
       stage.style.setProperty("--app-h", `${h}px`);
       stage.style.setProperty("--vv-top", `${vv ? vv.offsetTop : 0}px`);
-      el.classList.toggle("kb", full - h > 120);
+      /* 주소창·툴바가 접히고 펴지는 것만으로는 키보드로 보지 않는다: 입력칸에 커서가 있을 때만 */
+      el.classList.toggle("kb", typing() && full - h > 120);
     };
     /* 입력칸은 페이지 전체가 아니라 가운데 스크롤 영역 안에서만 보이는 곳으로 옮긴다 */
     const reveal = (t: HTMLElement) => {
@@ -32,6 +39,7 @@ export function Device({ children }: { children: ReactNode }) {
       const t = e.target as HTMLElement;
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA")) { setTimeout(() => reveal(t), 120); setTimeout(() => reveal(t), 420); }
     };
+    const onBlur = () => setTimeout(sync, 60);
     const net = () => el.classList.toggle("is-offline", !navigator.onLine);
     net();
     sync();
@@ -41,6 +49,7 @@ export function Device({ children }: { children: ReactNode }) {
     window.addEventListener("online", net);
     window.addEventListener("offline", net);
     el.addEventListener("focusin", onFocus);
+    el.addEventListener("focusout", onBlur);
     return () => {
       root.classList.remove("app-lock");
       vv?.removeEventListener("resize", sync);
@@ -49,6 +58,7 @@ export function Device({ children }: { children: ReactNode }) {
       window.removeEventListener("online", net);
       window.removeEventListener("offline", net);
       el.removeEventListener("focusin", onFocus);
+      el.removeEventListener("focusout", onBlur);
     };
   }, []);
 

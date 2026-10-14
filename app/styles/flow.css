@@ -6,6 +6,7 @@ html.app-lock, html.app-lock body { overflow: hidden; overscroll-behavior: none;
 .device {
   position: relative; width: 100%; max-width: 480px; height: var(--app-h, 100dvh);
   background: var(--bg); overflow: hidden; isolation: isolate;
+  container: device / size; /* 화면 높이에 따른 조정은 브라우저 창이 아니라 이 틀의 실제 높이를 기준으로 한다 */
   --safe-t: max(env(safe-area-inset-top), 12px);
   --safe-b: max(env(safe-area-inset-bottom), 20px);
 }
@@ -575,12 +576,13 @@ html.app-lock, html.app-lock body { overflow: hidden; overscroll-behavior: none;
 .device.is-offline::after { content: "연결이 끊겼습니다 · 답은 이 기기에 저장되어 있어요"; position: absolute; left: 16px; right: 16px; top: calc(var(--safe-t) + 60px); z-index: 50; padding: 10px 14px; border-radius: 16px; background: var(--gray-900); color: #fff; font-size: 12px; line-height: 16px; text-align: center; animation: notify-in .5s var(--spring) both; }
 @media (prefers-reduced-motion: reduce) { .e-art img, .e-art .mark { animation: none !important; } }
 
-/* 화면이 낮으면(사파리 주소창이 보일 때 등) 플라스크 영역을 줄여 한 화면에 다 들어오게 한다 */
-@media (max-height: 780px) { .hero-scr .scr-body { padding-top: 40px; gap: 20px; } .hero-stage { zoom: .86; } }
-@media (max-height: 720px) { .hero-scr .scr-body { padding-top: 24px; gap: 16px; } .hero-stage { zoom: .82; } }
-@media (max-height: 680px) { .hero-stage { zoom: .76; } }
-@media (max-height: 640px) { .hero-scr .scr-body { padding-top: 12px; gap: 12px; } .hero-stage { zoom: .6; } .hero-text { font-size: 18px; line-height: 26px; } }
-@media (max-height: 560px) { .hero-stage { zoom: .46; } }
+/* 화면이 낮으면(사파리 주소창, 카카오톡 같은 앱 안 브라우저의 위아래 막대 등) 플라스크 영역을 줄여 한 화면에 다 들어오게 한다.
+   앱 안 브라우저는 창 높이를 실제보다 크게 알려 주기도 해서 @media 대신 틀(.device) 높이를 본다. */
+@container device (max-height: 780px) { .hero-scr .scr-body { padding-top: 40px; gap: 20px; } .hero-stage { zoom: .86; } }
+@container device (max-height: 720px) { .hero-scr .scr-body { padding-top: 24px; gap: 16px; } .hero-stage { zoom: .82; } }
+@container device (max-height: 680px) { .hero-stage { zoom: .76; } }
+@container device (max-height: 640px) { .scr-bottom { gap: 12px; } .hero-scr .scr-body { padding-top: 12px; gap: 12px; } .hero-stage { zoom: .6; } .hero-text { font-size: 18px; line-height: 26px; } }
+@container device (max-height: 560px) { .hero-stage { zoom: .46; } }
 
 /* 스크롤 영역 안의 블록은 화면이 낮아도 눌려 줄어들지 않고, 대신 스크롤된다 */
 .scr-body > * { flex-shrink: 0; }
@@ -607,4 +609,5 @@ html.app-lock, html.app-lock body { overflow: hidden; overscroll-behavior: none;
 .doc th, .doc td { text-align: left; vertical-align: top; padding: 10px 12px; border: 1px solid var(--gray-300); }
 .doc th { background: var(--gray-100); }
 .doc td:first-child { width: 34%; font-weight: 500; }
-.hero-caption + .privacy-line { margin-top: -10px; }
+.hero-caption + .privacy-line { margin-top: -8px; }
+@container device (max-height: 640px) { .hero-caption + .privacy-line { margin-top: -6px; } }
