@@ -139,5 +139,19 @@ export async function logError(path: string, err: unknown) {
   const message = raw.replace(/sb_[a-z]+_[\w-]+/g, "[key]").replace(/[\w-]{24,}/g, "[…]").slice(0, 200);
   await db.logError(Date.now(), path.split("?")[0].replace(/\/labs\/[^/]+/, "/labs/:id").slice(0, 80), message).catch(() => {});
 }
+/* ---------- 이용 통계 ---------- */
+const KINDS = ["step", "submit", "share", "lab_created", "make_click", "key_saved", "b_view"];
+export async function addEvent(v: Record<string, unknown>) {
+  const kind = str(v.k, 20), role = str(v.role, 1), dev = str(v.dev, 16);
+  if (!KINDS.includes(kind) || !["a", "r", "b"].includes(role) || !/^[a-z0-9]{4,16}$/.test(dev)) return;
+  const meta: Record<string, string | number> = {};
+  if (v.meta && typeof v.meta === "object") for (const [k, x] of Object.entries(v.meta as Record<string, unknown>).slice(0, 4)) {
+    if (!/^[a-z]{1,10}$/.test(k)) continue;
+    if (typeof x === "number" && Number.isFinite(x)) meta[k] = x; else if (typeof x === "string") meta[k] = x.slice(0, 24);
+  }
+  const lab = str(v.lab, 12) || null;
+  await db.addEvent({ at: Date.now(), kind, role, lab: lab && /^[a-z0-9]+$/.test(lab) ? lab : null, dev, meta });
+}
+export const statsDump = (days = 90) => db.dump(Date.now() - days * DAY);
 export const opsStats = () => db.stats(Date.now() - DAY).catch(() => null);
 

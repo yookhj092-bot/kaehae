@@ -1,4 +1,6 @@
 /* 카카오톡 공유 (브라우저). NEXT_PUBLIC_KAKAO_JS_KEY 가 없으면 쓸 수 없다고 알려 준다. */
+import { track } from "@/lib/track";
+
 type KakaoSDK = { isInitialized(): boolean; init(key: string): void; Share: { sendDefault(opts: Record<string, unknown>): void } };
 declare global { interface Window { Kakao?: KakaoSDK } }
 
@@ -28,6 +30,7 @@ export async function shareInviteToKakao(name: string, url: string): Promise<boo
       content: { title: `${name}님의 캐해 연구에 초대되셨습니다`, description: "타인의 눈으로 보는 나, KAEHAE · 약 5분 · 로그인 없이 참여", imageUrl: `${location.origin}/og?kind=invite&name=${encodeURIComponent(name)}`, imageWidth: 1200, imageHeight: 630, link },
       buttons: [{ title: "참여하기", link }],
     });
+    track("share", { ch: "kakao" });
     return true;
   } catch { return false; }
 }

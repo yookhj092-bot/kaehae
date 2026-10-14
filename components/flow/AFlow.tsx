@@ -18,6 +18,7 @@ import { createLab, getLab, isFail, markKeySaved, myLab, setMyLab, updateLab } f
 import { BAD_MSG, isBad } from "@/lib/moderation";
 import { RETENTION_DAYS } from "@/lib/site";
 import { kakaoShareReady, shareInviteToKakao } from "@/lib/kakao";
+import { setTrackCtx, track } from "@/lib/track";
 import { PrivacyLine, PrivacySheet } from "./Privacy";
 
 type Step = "home" | "name" | "pick" | "selfIntro" | "s_color" | "s1" | "s2" | "s3" | "s4" | "s5" | "build" | "key";
@@ -72,6 +73,8 @@ export function AFlow() {
     }
   }, []);
 
+  /* 이용 통계: 단계마다 한 번 */
+  useEffect(() => { setTrackCtx({ role: "a", lab: ids.lab || null }); track("step", { s: step }); }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
   const go = (s: Step) => setStep(s);
   const next = () => go(ORDER[Math.min(ORDER.length - 1, ORDER.indexOf(step) + 1)]);
   const back = () => {
@@ -100,6 +103,7 @@ export function AFlow() {
     } else if (await copyText(keyUrl)) toast.show("열쇠 링크를 복사했습니다. 메모나 나와의 채팅에 붙여 두세요");
     else { setKeyFail(true); return toast.show("복사하지 못했습니다. 링크를 길게 눌러 복사해 주세요"); }
     if (ids.lab) markKeySaved(ids.lab);
+    track("key_saved", { how });
     setKeyKept(true);
   };
   const onPhoto = (f?: File) => {
@@ -121,6 +125,9 @@ export function AFlow() {
     const made = await createLab(body);
     if (isFail(made)) { toast.show(made.error === "profanity" ? "이름에 쓸 수 없는 표현이 있습니다" : made.error === "busy" ? "연구소를 너무 자주 만들었습니다. 한 시간 뒤 다시 시도해 주세요" : "연구소를 만들지 못했습니다. 잠시 뒤 다시 시도해 주세요"); return go(made.error === "profanity" ? "name" : "selfIntro"); }
     setIds({ lab: made.id, key: made.key });
+    setTrackCtx({ role: "a", lab: made.id });
+    let from = ""; try { from = sessionStorage.getItem("kaehae-from") ?? ""; } catch {}
+    track("lab_created", from ? { from } : {});
     setMyLab({ lab: made.id, key: made.key, name: body.name });
     go("key");
   };
@@ -299,7 +306,7 @@ export function AFlow() {
           </div>
           <div className="link-box glass">
             <div className="lb-head"><b>초대 링크</b><span>친구에게 보내는 링크</span></div>
-            <div className="lb-row"><code>{inviteUrl.replace(/^https?:\/\//, "")}</code><button type="button" className="pressable" aria-label="초대 링크 복사" onClick={() => copy(inviteUrl, "초대 링크를 복사했습니다")}><Icon name="copy" size={20} /></button></div>
+            <div className="lb-row"><code>{inviteUrl.replace(/^https?:\/\//, "")}</code><button type="button" className="pressable" aria-label="초대 링크 복사" onClick={() => { track("share", { ch: "copy" }); copy(inviteUrl, "초대 링크를 복사했습니다"); }}><Icon name="copy" size={20} /></button></div>
           </div>
         </div>
         <div className="scr-bottom">
@@ -366,7 +373,7 @@ export function AFlow() {
           <div><b>{nm}님의 캐해 연구에 초대합니다</b><span>타인의 눈으로 보는 나, KAEHAE · 약 {totalMin}분</span></div>
         </div>
         <div className="share-grid">
-          <button type="button" className="pressable" onClick={() => copy(inviteUrl, "초대 링크를 복사했습니다")}><i className="glass"><Icon name="copy" /></i>링크 복사</button>
+          <button type="button" className="pressable" onClick={() => { track("share", { ch: "copy" }); copy(inviteUrl, "초대 링크를 복사했습니다"); }}><i className="glass"><Icon name="copy" /></i>링크 복사</button>
           <button type="button" className="pressable" onClick={async () => { if (!(await shareInviteToKakao(nm, inviteUrl))) toast.show(kakaoShareReady() ? "카카오톡을 열지 못했습니다" : "카카오톡 공유는 아직 준비 중입니다"); }}><i className="glass kakao">톡</i>카카오톡</button>
           <button type="button" className="pressable" onClick={async () => {
             toast.show("이미지를 만드는 중입니다");
@@ -374,8 +381,8 @@ export function AFlow() {
             if (r !== "cancelled") toast.show(r === "saved" ? "스토리 이미지를 저장했습니다" : r === "shared" ? "공유했습니다" : "이미지를 만들지 못했습니다");
           }}><i className="glass">◎</i>스토리</button>
           <button type="button" className="pressable" onClick={async () => {
-            if (navigator.share) { try { await navigator.share({ title: `${nm}님의 캐해 연구소`, text: `${nm}님의 캐해 연구에 초대합니다`, url: inviteUrl }); } catch {} }
-            else copy(inviteUrl, "초대 링크를 복사했습니다");
+            if (navigator.share) { try { await navigator.share({ title: `${nm}님의 캐해 연구소`, text: `${nm}님의 캐해 연구에 초대합니다`, url: inviteUrl }); track("share", { ch: "native" }); } catch {} }
+            else { track("share", { ch: "copy" }); copy(inviteUrl, "초대 링크를 복사했습니다"); }
           }}><i className="glass"><Icon name="export" /></i>더보기</button>
         </div>
       </BottomSheet>

@@ -1,3 +1,4 @@
+import { track } from "@/lib/track";
 /* 공유 이미지 그리기 (피그마 sharing image 페이지의 card/* · story/* 와 같은 구성)
    화면에 이미 불러온 글꼴로 캔버스에 직접 그린다. 좌표는 피그마 1배 기준이고 3배로 내보낸다. */
 
@@ -176,6 +177,11 @@ export async function renderStoryReport(kind: CardKind, d: ShareData) {
 const toBlob = (c: HTMLCanvasElement) => new Promise<Blob | null>((res) => c.toBlob(res, "image/png"));
 /** 공유 창을 열 수 있으면 열고(사진 저장·인스타그램 등), 아니면 파일로 내려받는다 */
 export async function shareCanvas(c: HTMLCanvasElement, filename: string, opts: { text?: string; preferShare?: boolean } = {}): Promise<"shared" | "saved" | "cancelled" | "failed"> {
+  const r = await shareCanvasRaw(c, filename, opts);
+  if (r === "shared" || r === "saved") track("share", { ch: filename.replace(/^kaehae-|\.png$/g, ""), how: r });
+  return r;
+}
+async function shareCanvasRaw(c: HTMLCanvasElement, filename: string, opts: { text?: string; preferShare?: boolean }): Promise<"shared" | "saved" | "cancelled" | "failed"> {
   const blob = await toBlob(c);
   if (!blob) return "failed";
   const file = new File([blob], filename, { type: "image/png" });

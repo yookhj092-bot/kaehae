@@ -19,6 +19,7 @@ import { deleteLab, getLabFull, isFail, keySaved, reportSample, markKeySaved, my
 import type { Sample } from "@/lib/types";
 import { RETENTION_DAYS } from "@/lib/site";
 import { kakaoShareReady, shareInviteToKakao } from "@/lib/kakao";
+import { setTrackCtx, track } from "@/lib/track";
 import { DEMO_SELF, demoSamples, INGREDIENTS, SEASONS, TASTE, TEXTURES, VIS, ZOMBIE, ago, avg, tally, type Self } from "./reportData";
 
 type View = "home" | "arrive" | "report" | "person" | "question" | "card" | "settings";
@@ -92,6 +93,7 @@ export function BFlow() {
       try { const raw = localStorage.getItem(`kaehae-seen-${l.lab}`); if (raw != null) s = Math.min(d.samples.length, Number(raw) || 0); else localStorage.setItem(`kaehae-seen-${l.lab}`, String(s)); } catch {}
       setSeen(s);
       setKeyKept(keySaved(l.lab));
+      setTrackCtx({ role: "b", lab: l.lab }); track("b_view", { n: d.samples.length });
       setReady(true);
     }
   }, []);
@@ -317,7 +319,7 @@ export function BFlow() {
               {live && !keyKept ? <button type="button" className="nudge glass pressable warn" onClick={async () => {
                 buzz(8);
                 if (!(await copyText(`${origin}/b?lab=${live.lab}&key=${live.key}`))) return toast.show("복사하지 못했습니다. 설정에서 다시 시도해 주세요");
-                markKeySaved(live.lab); setKeyKept(true); toast.show("열쇠 링크를 복사했습니다. 메모나 나와의 채팅에 붙여 두세요");
+                markKeySaved(live.lab); setKeyKept(true); track("key_saved", { how: "home" }); toast.show("열쇠 링크 복사했습니다. 메모나 나와의 채팅에 붙여 두세요");
               }}><b>열쇠 링크 보관하기</b><span>잃어버리면 다른 기기에서 연구소를 다시 열 수 없습니다. 눌러서 복사해 두세요</span><Icon name="copy" size={20} /></button> : null}
               {hasSelf && keyKept ? <p className="all-set">연구소 준비가 모두 끝났습니다.</p> : null}
             </div>
@@ -629,7 +631,7 @@ export function BFlow() {
       {/* 초대 링크 */}
       <BottomSheet open={sheet === "invite"} onClose={() => setSheet(null)} title="친구 초대하기" desc={open ? "링크를 받은 친구는 로그인 없이 바로 참여할 수 있습니다." : "지금은 응답을 마감한 상태입니다. 설정에서 다시 열 수 있어요."}
         actions={<Button block variant="assistive" onClick={() => setSheet(null)}>닫기</Button>}>
-        <div className="link-box glass"><div className="lb-row"><code>{inviteUrl.replace(/^https?:\/\//, "")}</code><button type="button" className="pressable" aria-label="초대 링크 복사" onClick={() => copy(inviteUrl, "초대 링크를 복사했습니다")}><Icon name="copy" size={20} /></button></div></div>
+        <div className="link-box glass"><div className="lb-row"><code>{inviteUrl.replace(/^https?:\/\//, "")}</code><button type="button" className="pressable" aria-label="초대 링크 복사" onClick={() => { track("share", { ch: "copy" }); copy(inviteUrl, "초대 링크를 복사했습니다"); }}><Icon name="copy" size={20} /></button></div></div>
         {kakaoShareReady() ? <button type="button" className="kakao-btn pressable" onClick={async () => { if (!(await shareInviteToKakao(name, inviteUrl))) toast.show("카카오톡을 열지 못했습니다"); }}>카카오톡으로 보내기</button> : null}
       </BottomSheet>
       <Modal open={confirmDel} onClose={() => setConfirmDel(false)} title="연구소를 삭제할까요?" desc={`표본 ${n}개와 리포트가 모두 사라지고 되돌릴 수 없습니다.`}

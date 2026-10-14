@@ -20,6 +20,7 @@ import { hexToRgb, hslToHex, hsvToHex, mix, nameOf, rgbToHsl, type HSV } from "@
 import { expById, pad2 } from "@/lib/experiments";
 import { renderCard, shareCanvas } from "@/lib/shareImage";
 import { getLab, isFail, myLab, submitSample, submitTaste } from "@/lib/api";
+import { setTrackCtx, track } from "@/lib/track";
 import { BAD_MSG, isBad } from "@/lib/moderation";
 import { PrivacyLine, PrivacySheet } from "./Privacy";
 
@@ -234,7 +235,9 @@ export function RFlow() {
     buzz(8);
     setTimeout(next, 420);
   };
-  const soon = () => { location.assign("/a"); };
+  /* 이용 통계: 단계마다 한 번 (예시 화면은 보내지 않는다) */
+  useEffect(() => { if (!ready) return; setTrackCtx({ role: "r", lab: labId }); track("step", { s: step }); }, [step, ready, labId]);
+  const soon = () => { track("make_click", { at: step }); try { if (labId) sessionStorage.setItem("kaehae-from", labId); } catch {} location.assign("/a"); };
   /* 붓는 순간 서버에 표본을 낸다. 답한 문항만 보낸다(보관해 둔 문항은 빈 값). */
   const submit = async (): Promise<boolean> => {
     if (!labId || sample) return true;
@@ -253,6 +256,7 @@ export function RFlow() {
       return false;
     }
     setSample(r);
+    track("submit", { sid: r.id });
     try { localStorage.setItem(`kaehae-done-${labId}`, r.id); } catch {}
     return true;
   };
@@ -262,6 +266,7 @@ export function RFlow() {
     submitTaste(labId, sample.id, BONUS.map((id) => (typeof g[id] === "number" ? (g[id] as number) : null)));
   }, [step, labId, sample, g]);
   const share = async () => {
+    track("share", { ch: "copy" });
     toast.show((await copyText(labId ? `${location.origin}/r?lab=${labId}` : `${location.origin}/r`)) ? "초대 링크를 복사했습니다" : "링크를 복사하지 못했습니다");
   };
 

@@ -1,5 +1,5 @@
 import type { Sample } from "@/lib/types";
-import type { DB, Lab, LabPatch } from "./db";
+import type { DB, Ev, Lab, LabPatch } from "./db";
 
 /* 배포용 저장소: Supabase(Postgres)를 REST로 부른다. 표는 supabase/schema.sql 로 만든다.
    서비스 키는 서버에서만 쓰고 브라우저로 나가지 않는다. */
@@ -69,7 +69,20 @@ export const supabaseDB: DB = {
     const count = async (p: string) => Number(((await rest(p, { method: "HEAD", prefer: "count=exact" })).headers.get("content-range") ?? "/0").split("/")[1]) || 0;
     return { errors: await count(`errors?at=gte.${since}&select=id`), reports: await count("reports?select=id") };
   },
+  async addEvent(e) {
+    await rest("events", { method: "POST", prefer: "return=minimal", body: JSON.stringify(e) });
+  },
+  async dump(since) {
+    const labs = (await (await rest("labs?select=id,name,created_at,open,samples(id,at,taste:data->taste)&order=created_at.desc&limit=2000")).json()) as { id: string; name: string; created_at: number; open: boolean; samples: { id: string; at: number; taste: unknown[] | null }[] }[];
+    /* 통계 표(004_events.sql)가 아직 없으면 빈 목록 */
+    const events = (await rest(`events?at=gte.${since}&select=at,kind,role,lab,dev,meta&order=at.asc&limit=50000`).then((r) => r.json()).catch(() => [])) as Ev[];
+    return {
+      labs: labs.map((l) => ({ id: l.id, name: l.name, createdAt: Number(l.created_at), open: l.open, samples: (l.samples ?? []).map((s) => ({ id: s.id, at: Number(s.at), bonus: Array.isArray(s.taste) && s.taste.some((x) => x != null) })) })),
+      events: events.map((e) => ({ ...e, at: Number(e.at) })),
+    };
+  },
   async sweep(before) {
+    await rest(`events?at=lt.${before - 89 * 86_400_000}`, { method: "DELETE", prefer: "return=minimal" }).catch(() => {});
     await rest(`rate?win=lt.${before}`, { method: "DELETE", prefer: "return=minimal" });
     await rest(`errors?at=lt.${before - 29 * 86_400_000}`, { method: "DELETE", prefer: "return=minimal" });
   },
