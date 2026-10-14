@@ -1,0 +1,79 @@
+/* KAEHAE 디자인 토큰 — 피그마 `foundation` 변수 컬렉션과 텍스트·효과 스타일을 그대로 옮긴 값 */
+:root {
+  /* color/gray */
+  --gray-50: #fafafa; --gray-100: #f5f5f5; --gray-200: #eeeeee; --gray-300: #e0e0e0; --gray-400: #bdbdbd;
+  --gray-500: #9e9e9e; --gray-600: #757575; --gray-700: #616161; --gray-800: #424242; --gray-900: #212121;
+  /* color/cool-gray */
+  --cool-gray-50: #f9fafb; --cool-gray-100: #f2f4f6; --cool-gray-200: #e5e8eb; --cool-gray-300: #d1d6db; --cool-gray-400: #b0b8c1;
+  --cool-gray-500: #8b95a1; --cool-gray-600: #6b7684; --cool-gray-700: #4e5968; --cool-gray-800: #333d4b; --cool-gray-900: #191f28;
+  /* color/common */
+  --common-0: #ffffff; --common-1000: #121212;
+  /* color/blue */
+  --blue-50: #f2f7ff; --blue-100: #e2eeff; --blue-200: #c3dbff; --blue-300: #9ec4ff; --blue-400: #7caaf3;
+  --blue-500: #5586d2; --blue-600: #4775be; --blue-700: #315a99; --blue-800: #204174; --blue-900: #122a51;
+  /* color/violet */
+  --violet-50: #f6f5ff; --violet-100: #eceaff; --violet-200: #d8d3ff; --violet-300: #c1b8fe; --violet-400: #a99cf0;
+  --violet-500: #9181da; --violet-600: #7667ba; --violet-700: #5b4d96; --violet-800: #433772; --violet-900: #2c234f;
+  /* color/pink */
+  --pink-50: #fdf4fa; --pink-100: #f9e6f4; --pink-200: #f1cce8; --pink-300: #e5afd8; --pink-400: #dd9ccf;
+  --pink-500: #ba76ac; --pink-600: #9c5c8f; --pink-700: #7b4471; --pink-800: #5c3054; --pink-900: #3f1d39;
+  /* color/teal */
+  --teal-50: #f1f9f7; --teal-100: #e1f1ed; --teal-200: #c0e1da; --teal-300: #9accc2; --teal-400: #79b7ac;
+  --teal-500: #5b9f93; --teal-600: #428478; --teal-700: #2c675d; --teal-800: #1b4c44; --teal-900: #0d322d;
+  /* color/red */
+  --red-50: #fff4f3; --red-100: #ffe6e5; --red-200: #ffcac7; --red-300: #ffa7a4; --red-400: #ff7a7a;
+  --red-500: #ee5459; --red-600: #cc3841; --red-700: #a41f2c; --red-800: #7d0e1c; --red-900: #57020e;
+  /* color/yellow */
+  --yellow-50: #fbf8e8; --yellow-100: #f6f0cf; --yellow-200: #ece09c; --yellow-300: #decc67; --yellow-400: #cdb235;
+  --yellow-500: #b59600; --yellow-600: #967800; --yellow-700: #765b00; --yellow-800: #584100; --yellow-900: #3b2900;
+
+  /* paint styles */
+  --gradient-bv: linear-gradient(180deg, var(--blue-200), var(--violet-200));
+  --gradient-line: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, .05) 50%, #fff 100%);
+
+  /* spacing */
+  --sp-4: 4px; --sp-8: 8px; --sp-12: 12px; --sp-16: 16px; --sp-20: 20px; --sp-24: 24px;
+  /* radius */
+  --r-4: 4px; --r-8: 8px; --r-12: 12px; --r-16: 16px; --r-20: 20px; --r-24: 24px; --r-full: 1000px;
+
+  /* semantic */
+  --bg: var(--gray-200);
+  --text: var(--gray-900);
+  --text-sub: var(--gray-800);
+  --text-weak: var(--gray-700);
+  --text-faint: var(--gray-600);
+  --text-disabled: var(--gray-400);
+  --accent: var(--violet-600);
+
+  /* effect styles */
+  --blur-main: blur(20px);
+  --ai-shadow: inset 2px 4px 13px var(--blue-400), inset -4px -4px 12px var(--pink-400), inset 0 -3px 3px var(--violet-300), inset 1px 2px 5px var(--yellow-100);
+  --selection-shadow: 0 0 8px var(--gray-400);
+
+  /* motion */
+  --spring: cubic-bezier(.34, 1.56, .64, 1);
+  --out: cubic-bezier(.2, .8, .2, 1);
+  --dur-fast: 140ms; --dur: 260ms; --dur-slow: 480ms;
+
+  /* layout */
+  --screen-w: 375px; --screen-h: 812px;
+  --safe-top: 44px; --safe-bottom: 34px; --nav-h: 56px;
+}
+
+/* 텍스트 스타일 (IBM Plex Sans KR, 자간 -0.5%) */
+.t-heading-07 { font-size: 54px; line-height: 64px; font-weight: 700; }
+.t-heading-compact-07 { font-size: 54px; line-height: 64px; font-weight: 400; }
+.t-heading-06 { font-size: 42px; line-height: 50px; font-weight: 700; }
+.t-heading-05 { font-size: 32px; line-height: 40px; font-weight: 700; }
+.t-heading-compact-05 { font-size: 32px; line-height: 40px; font-weight: 400; }
+.t-heading-04 { font-size: 28px; line-height: 36px; font-weight: 700; }
+.t-heading-compact-04 { font-size: 28px; line-height: 36px; font-weight: 400; }
+.t-heading-03 { font-size: 20px; line-height: 28px; font-weight: 700; }
+.t-heading-compact-03 { font-size: 20px; line-height: 28px; font-weight: 400; }
+.t-heading-compact-02 { font-size: 16px; line-height: 22px; font-weight: 700; }
+.t-heading-compact-01 { font-size: 14px; line-height: 18px; font-weight: 700; }
+.t-body-02 { font-size: 16px; line-height: 24px; font-weight: 500; }
+.t-body-compact-02 { font-size: 16px; line-height: 24px; font-weight: 400; }
+.t-body-01 { font-size: 14px; line-height: 20px; font-weight: 500; }
+.t-body-compact-01 { font-size: 14px; line-height: 20px; font-weight: 400; }
+.t-caption { font-size: 12px; line-height: 16px; font-weight: 400; }

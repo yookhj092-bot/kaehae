@@ -1,69 +1,36 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import Link from "next/link";
 
+/* 임시 홈: 화면 작업이 진행되는 동안 각 단계로 가는 입구 */
 export default function Home() {
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>
-            To get started, edit the{" "}
-            <code className={styles.code}>page.tsx</code> file.
-          </h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main style={{ minHeight: "100dvh", display: "grid", placeItems: "center", padding: 24 }}>
+      <div style={{ display: "grid", gap: 12, textAlign: "center" }}>
+        <p className="t-body-01" style={{ color: "var(--gray-800)" }}>타인의 눈으로 보는 나</p>
+        <h1 className="t-heading-05">KAEHAE</h1>
+        <p className="t-body-compact-01" style={{ color: "var(--gray-700)", marginBottom: 12 }}>신규 버전 · 작업 중</p>
+        <Link href="/a" className="k-btn primary" style={{ textDecoration: "none", padding: "16px 28px" }}>
+          연구소 만들기 플로우 (A)
+        </Link>
+        <Link href="/b?demo=1" className="k-btn primary" style={{ textDecoration: "none", padding: "16px 28px" }}>
+          내 연구소 · 리포트 예시 (B)
+        </Link>
+        <Link href="/r" className="k-btn primary" style={{ textDecoration: "none", padding: "16px 28px" }}>
+          연구원 응답 플로우 (R)
+        </Link>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", maxWidth: 340 }}>
+          {[["첫인상 채집 01", "/r?a=01&at=intro1"], ["스타일 표본 04", "/r?a=04&at=intro4"], ["비유 실험 07", "/r?a=07&at=intro7"], ["행동 관찰 06", "/r?b=06&at=intro6"], ["관계 데이터 10", "/r?at=intro10"], ["제출 완료", "/r?at=done"], ["보너스 09", "/r?at=intro9"]].map(([l, h]) => (
+            <a key={h} href={h} className="k-btn assistive glass sm" style={{ textDecoration: "none", padding: "8px 14px", fontSize: 13 }}>{l}</a>
+          ))}
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", maxWidth: 340 }}>
+          {[["없는 링크", "notfound"], ["응답 마감", "closed"], ["이미 제출", "submitted"], ["열쇠 없음", "nokey"], ["네트워크 오류", "offline"]].map(([l, k]) => (
+            <a key={k} href={`/e?k=${k}`} className="k-btn assistive glass sm" style={{ textDecoration: "none", padding: "8px 14px", fontSize: 13 }}>{l}</a>
+          ))}
         </div>
-      </main>
-    </div>
+        <Link href="/system" className="k-btn assistive glass" style={{ textDecoration: "none", padding: "16px 28px" }}>
+          디자인 시스템 보기
+        </Link>
+      </div>
+    </main>
   );
 }

@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.data/
+
+# 예시 환경 변수 파일은 올린다
+!.env.example
