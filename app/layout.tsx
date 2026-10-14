@@ -9,11 +9,14 @@ const plex = IBM_Plex_Sans_KR({
   display: "swap",
 });
 
+/* 사이트 주소: 직접 넣은 값 → Vercel이 알려 주는 운영 주소 → 개발 주소 순으로 쓴다 */
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL?.trim() || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:5181");
+
 export const metadata: Metadata = {
   title: "KAEHAE · 타인의 눈으로 보는 나",
   description: "친구들의 답이 한 방울씩 섞여, 타인이 본 나의 리포트가 됩니다.",
   /* 링크 미리보기 이미지의 절대 주소를 만들 때 쓰는 기준 주소 */
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:5181"),
+  metadataBase: new URL(SITE_URL),
   openGraph: { siteName: "KAEHAE", images: [{ url: "/og?kind=default", width: 1200, height: 630 }] },
 };
 
