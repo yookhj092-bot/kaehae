@@ -17,6 +17,16 @@ export const metadata: Metadata = {
   description: "친구들의 답이 한 방울씩 섞여, 타인이 본 나의 리포트가 됩니다.",
   /* 링크 미리보기 이미지의 절대 주소를 만들 때 쓰는 기준 주소 */
   metadataBase: new URL(SITE_URL),
+  /* 아이콘: 브라우저 탭(SVG + 크기별 PNG, 구형은 app/favicon.ico), 아이폰·아이패드 홈 화면. 안드로이드 홈 화면용은 manifest.ts */
+  icons: {
+    icon: [
+      { url: "/icons/icon.svg", type: "image/svg+xml" },
+      ...[16, 32, 48, 96].map((n) => ({ url: `/icons/favicon-${n}.png`, type: "image/png", sizes: `${n}x${n}` })),
+      { url: "/icons/icon-192.png", type: "image/png", sizes: "192x192" },
+    ],
+    apple: [120, 152, 167, 180].map((n) => ({ url: `/icons/apple-${n}.png`, sizes: `${n}x${n}` })),
+  },
+  appleWebApp: { title: "KAEHAE", statusBarStyle: "default" },
   openGraph: { siteName: "KAEHAE", images: [{ url: "/og?kind=default", width: 1200, height: 630 }] },
 };
 

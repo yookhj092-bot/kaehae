@@ -11,7 +11,7 @@ import {
   AiOrb, Bar, BarEnds, Beaker, BottomSheet, Button, Guide, IdCard, IngredientOption, Logo, Modal, Navigation, ProgressBar,
   RangeSticks, ResearchIntro, ResearchOpinion, ScaleTubes, Selection, TextButton, TextField, Toast, buzz, copyText, cx, useToast,
 } from "@/components/ui";
-import { ColorPicker, LoaderArt, Particles, preloadMotion, useFlaskSrc } from "./widgets";
+import { ColorPicker, LoaderArt, Particles, preloadMotion, useFlaskSrc, useHeroFit } from "./widgets";
 import { Device } from "./Device";
 import { GenericQ } from "./GenericQ";
 import { Done, Sync } from "./Ending";
@@ -603,6 +603,7 @@ export function RFlow() {
 /** R-01 초대 랜딩 · R-09 붓기: 3D 플라스크 뒤로 흐릿한 색 원이 흐른다 */
 function Hero({ mode, colors = [], onEnter, onPour, onDone, onPrivacy, ownerUrl }: { mode: "landing" | "pour"; colors?: string[]; ownerUrl?: string | null; onEnter?: () => void; onPrivacy?: () => void; onPour?: () => Promise<boolean>; onDone?: () => void }) {
   const [phase, setPhase] = useState<"idle" | "merging" | "done">("idle");
+  const heroRef = useHeroFit(`${mode}-${phase === "done"}`);
   const flask = useFlaskSrc();
   const base = mode === "landing" ? ["#E0E0E0"] : colors.length ? colors : ["#E0E0E0", "#B0B8C1", "#F6F0CF"];
   const row = Array.from({ length: 10 }, (_, i) => base[i % base.length]);
@@ -623,7 +624,7 @@ function Hero({ mode, colors = [], onEnter, onPour, onDone, onPrivacy, ownerUrl 
         {mode === "landing" ? (
           <div className="hero-title"><p>타인의 눈으로 보는 나</p><Logo height={38} className="k-logo" /></div>
         ) : <div style={{ height: 62 }} />}
-        <div className="hero-stage" style={{ marginTop: -12 }}>
+        <div className="hero-stage" ref={heroRef} style={{ marginTop: -12 }}>
           <div className={cx("hero-glow", phase === "done" && "on")} style={{ "--mix": mixed } as CSSProperties} />
           <motion.div className={cx("hero-circles", phase !== "idle" && "merge")} animate={{ opacity: phase === "idle" ? 1 : 0 }} transition={{ duration: 0.5 }}>
             <div className="track" style={{ "--blur": mode === "pour" ? "30px" : "16px" } as CSSProperties}>

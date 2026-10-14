@@ -112,6 +112,27 @@ export function LoaderArt() {
   return <img src={src} alt="" />;
 }
 
+/** 플라스크 영역을 화면 높이에 맞춰 줄인다. 글과 버튼이 한 화면에 다 들어오도록, 넘치는 만큼만 정확히 줄인다.
+    (CSS의 높이별 단계는 첫 그림용 근삿값이고, 여기서 실제로 재서 덮어쓴다.) */
+export function useHeroFit(dep?: unknown) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current, body = el?.closest(".scr-body") as HTMLElement | null;
+    if (!el || !body) return;
+    const fit = () => {
+      el.style.zoom = "1";
+      const raw = body.scrollHeight - body.clientHeight, over = raw > 0 ? raw + 6 : 0, h = el.offsetHeight || 352; // 6px: 확대 비율 반올림 여유
+      el.style.zoom = String(Math.max(0.3, Math.min(1, (h - over) / h)));
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(body);
+    document.fonts?.ready.then(fit).catch(() => {});
+    return () => ro.disconnect();
+  }, [dep]);
+  return ref;
+}
+
 /** 플라스크 모션(용량 큼)의 주소. 다 받기 전에는 정지 이미지 주소를 돌려준다. */
 export function useFlaskSrc() {
   const [src, setSrc] = useState("/motion/flask-poster.png");

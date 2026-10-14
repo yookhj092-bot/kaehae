@@ -7,7 +7,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { BottomSheet, Button, Guide, Icon, Logo, Navigation, ProgressBar, Radio, TextButton, TextField, Toast, buzz, copyText, cx, useToast } from "@/components/ui";
-import { ColorPicker, LoaderArt, preloadMotion, useFlaskSrc } from "./widgets";
+import { ColorPicker, LoaderArt, preloadMotion, useFlaskSrc, useHeroFit } from "./widgets";
 import { Device } from "./Device";
 import { GenericQ } from "./GenericQ";
 import { isValid, type QDef } from "./questions";
@@ -46,6 +46,7 @@ export function AFlow() {
   const [g, setG] = useState<Record<string, unknown>>({});
   const [selfOn, setSelfOn] = useState(false);
   const [share, setShare] = useState(false);
+  const heroRef = useHeroFit(step);
   const [keyKept, setKeyKept] = useState(false); // 열쇠 링크를 보관했는지
   const [keyFail, setKeyFail] = useState(false); // 복사가 막힌 브라우저
   const [privacy, setPrivacy] = useState(false);
@@ -141,7 +142,7 @@ export function AFlow() {
         <div className="scr hero-scr" style={{ paddingTop: "var(--safe-t)" }}>
           <div className="scr-body">
             <div className="hero-title"><p>타인의 눈으로 보는 나</p><Logo height={38} className="k-logo" /></div>
-            <div className="hero-stage" style={{ marginTop: -12 }}>
+            <div className="hero-stage" ref={heroRef} style={{ marginTop: -12 }}>
               <div className="hero-circles"><div className="track" style={{ "--blur": "22px" } as CSSProperties}>
                 {[...HERO_COLORS, ...HERO_COLORS, ...HERO_COLORS, ...HERO_COLORS].map((c, i) => <i key={i} style={{ "--c": c } as CSSProperties} />)}
               </div></div>
