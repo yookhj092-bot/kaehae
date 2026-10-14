@@ -17,6 +17,7 @@ import { renderStoryInvite, shareCanvas } from "@/lib/shareImage";
 import { createLab, getLab, isFail, myLab, setMyLab, updateLab } from "@/lib/api";
 import { BAD_MSG, isBad } from "@/lib/moderation";
 import { RETENTION_DAYS } from "@/lib/site";
+import { kakaoShareReady, shareInviteToKakao } from "@/lib/kakao";
 import { PrivacyLine, PrivacySheet } from "./Privacy";
 
 type Step = "home" | "name" | "pick" | "selfIntro" | "s_color" | "s1" | "s2" | "s3" | "s4" | "s5" | "build" | "key";
@@ -145,6 +146,7 @@ export function AFlow() {
           <div className="scr-bottom">
             <Button block onClick={next} className="sheen">내 연구소 만들기</Button>
             <span className="hero-caption">약 1분 · 로그인 없이 시작</span>
+            <div className="link-row"><TextButton size="sm" onClick={() => location.assign("/e?k=nokey")}>이미 만든 연구소 열기</TextButton></div>
             <PrivacyLine onOpen={() => setPrivacy(true)} />
           </div>
         </div>
@@ -283,7 +285,7 @@ export function AFlow() {
             <div className="lb-head"><b>연구소 열쇠</b><span>나만 보는 비밀 링크</span></div>
             <div className="lb-row"><code>{keyUrl.replace(/^https?:\/\//, "")}</code><button type="button" className="pressable" aria-label="열쇠 링크 복사" onClick={() => copy(keyUrl, "열쇠 링크를 복사했습니다")}><Icon name="copy" size={20} /></button></div>
             <p>로그인이 없어서, 이 링크가 있어야 리포트를 다시 열 수 있습니다. 꼭 보관해 주세요. 마지막 표본이 들어온 뒤 {RETENTION_DAYS}일이 지나면 연구소는 자동으로 지워집니다.</p>
-            <TextButton size="sm" onClick={() => toast.show("카카오 연결은 다음 단계에서 이어집니다")}>카카오로 열쇠 보관하기</TextButton>
+            <TextButton size="sm" onClick={() => location.assign(`/api/kakao/login?lab=${ids.lab}&key=${ids.key}`)}>카카오로 열쇠 보관하기</TextButton>
           </div>
         </div>
         <div className="scr-bottom">
@@ -343,7 +345,7 @@ export function AFlow() {
         </div>
         <div className="share-grid">
           <button type="button" className="pressable" onClick={() => copy(inviteUrl, "초대 링크를 복사했습니다")}><i className="glass"><Icon name="copy" /></i>링크 복사</button>
-          <button type="button" className="pressable" onClick={() => toast.show("카카오톡 공유는 실제 서비스에서 연결됩니다")}><i className="glass kakao">톡</i>카카오톡</button>
+          <button type="button" className="pressable" onClick={async () => { if (!(await shareInviteToKakao(nm, inviteUrl))) toast.show(kakaoShareReady() ? "카카오톡을 열지 못했습니다" : "카카오톡 공유는 아직 준비 중입니다"); }}><i className="glass kakao">톡</i>카카오톡</button>
           <button type="button" className="pressable" onClick={async () => {
             toast.show("이미지를 만드는 중입니다");
             const r = await shareCanvas(await renderStoryInvite(nm), "kaehae-invite-story.png");

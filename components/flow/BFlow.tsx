@@ -2,7 +2,7 @@
 
 /* B 플로우: 연구 대상이 열쇠 링크로 들어와 보는 연구소 홈과 리포트.
    B-01 연구소 홈 · B-02 새 표본 도착 · B-03 리포트 종합 · B-04 연구원별 목록 · B-05 연구원 상세 · B-06 문항별 보기
-   B-07 나 vs 친구들 · B-08 공유 카드 · B-09 숨기기·신고 · B-10 카카오 연결 · B-11 알림 켜기 · B-12 설정
+   B-07 나 vs 친구들 · B-08 공유 카드 · B-09 숨기기·신고 · B-10 카카오 연결 · B-12 설정 (B-11 알림은 지인 테스트 단계에서 뺐다)
    /b?lab=…&key=… (열쇠 링크) 또는 이 기기에서 만든 연구소가 있으면 서버의 실제 표본으로 그린다.
    둘 다 없으면 예시 데이터. 예시 옵션: ?demo=1 · ?n=0~4 · ?self=0. 공통: ?at=home|arrive|report|people|compare|card|settings · ?instant=1 */
 
@@ -18,6 +18,7 @@ import { renderCard, renderStoryReport, shareCanvas, type CardKind } from "@/lib
 import { deleteLab, getLabFull, isFail, myLab, setMyLab, updateLab } from "@/lib/api";
 import type { Sample } from "@/lib/types";
 import { RETENTION_DAYS } from "@/lib/site";
+import { kakaoShareReady, shareInviteToKakao } from "@/lib/kakao";
 import { DEMO_SELF, demoSamples, INGREDIENTS, SEASONS, TASTE, TEXTURES, VIS, ZOMBIE, ago, avg, tally, type Self } from "./reportData";
 
 type View = "home" | "arrive" | "report" | "person" | "question" | "card" | "settings";
@@ -67,9 +68,8 @@ export function BFlow() {
   const [qkey, setQkey] = useState<string | null>(null);
   const [hidden, setHiddenState] = useState<string[]>([]);
   const [menu, setMenu] = useState<{ id: string; step: "menu" | "report"; reason: number | null } | null>(null);
-  const [sheet, setSheet] = useState<null | "kakao" | "notify" | "invite">(null);
+  const [sheet, setSheet] = useState<null | "kakao" | "invite">(null);
   const [kakao, setKakao] = useState(false);
-  const [notify, setNotify] = useState(false);
   const [open, setOpen] = useState(true); // 응답 받는 중
   const [expiresAt, setExpiresAt] = useState<number | null>(null); // 자동 삭제 예정 시각
   const [confirmDel, setConfirmDel] = useState(false);
@@ -87,6 +87,7 @@ export function BFlow() {
     }
     setName(d.name); setSamples(d.samples); setOpen(d.open); setHiddenState(d.hidden); setExpiresAt(d.expiresAt);
     setSelf(d.self ? { color: d.self.color, taste: d.self.taste } : null);
+    setKakao(d.kakao);
     if (first) {
       let s = d.samples.length;
       try { const raw = localStorage.getItem(`kaehae-seen-${l.lab}`); if (raw != null) s = Math.min(d.samples.length, Number(raw) || 0); else localStorage.setItem(`kaehae-seen-${l.lab}`, String(s)); } catch {}
@@ -101,6 +102,11 @@ export function BFlow() {
     if (at === "people" || at === "compare") { setView("report"); setTab(at); }
     else if (at && ["home", "arrive", "report", "card", "settings"].includes(at)) setView(at as View);
     if (q.get("lab") && !q.get("key")) return location.replace("/e?k=nokey"); // 열쇠 없이 연구소 주소만 들고 온 경우
+    const kk = q.get("kakao");
+    if (kk) {
+      setTimeout(() => toast.show(kk === "linked" ? "카카오에 열쇠를 보관했습니다" : kk === "found" ? "보관해 둔 연구소를 열었습니다" : kk === "off" ? "카카오 연결은 아직 준비 중입니다" : kk === "cancel" ? "카카오 연결을 취소했습니다" : "카카오 연결에 실패했습니다. 다시 시도해 주세요"), 400);
+      q.delete("kakao"); history.replaceState(null, "", `${location.pathname}?${q}`);
+    }
     const mine = myLab();
     const demo = q.has("demo") || q.has("n") || q.has("self");
     const l = q.get("lab") ? { lab: q.get("lab")!, key: q.get("key")! } : !demo && mine ? { lab: mine.lab, key: mine.key } : null;
@@ -314,8 +320,7 @@ export function BFlow() {
             <div className="stack-12">
               {!hasSelf ? <button type="button" className="nudge glass pressable" onClick={() => location.assign("/a?at=s_color")}><b>내가 보는 나 남기기</b><span>답해 두면 ‘나 vs 친구들’ 비교가 열립니다 · 약 40초</span><Icon name="next" size={20} /></button> : null}
               {!kakao ? <button type="button" className="nudge glass pressable" onClick={() => setSheet("kakao")}><b>카카오로 열쇠 보관하기</b><span>링크를 잃어버려도 다시 들어올 수 있습니다</span><Icon name="next" size={20} /></button> : null}
-              {!notify ? <button type="button" className="nudge glass pressable" onClick={() => setSheet("notify")}><b>새 표본 알림 받기</b><span>친구가 답하면 바로 알려 드립니다</span><Icon name="next" size={20} /></button> : null}
-              {kakao && notify && hasSelf ? <p className="all-set">연구소 준비가 모두 끝났습니다.</p> : null}
+              {kakao && hasSelf ? <p className="all-set">연구소 준비가 모두 끝났습니다.</p> : null}
             </div>
           </section>
         </div>
@@ -565,10 +570,14 @@ export function BFlow() {
               if (live && isFail(await updateLab(live.lab, live.key, { open: v }))) { setOpen(!v); return toast.show("바꾸지 못했습니다. 잠시 뒤 다시 시도해 주세요"); }
               toast.show(v ? "다시 응답을 받습니다" : "응답을 마감했습니다");
             }} label="응답 받기" /></div>
-            <div className="set-row"><div><b>새 표본 알림</b><span>친구가 답하면 알려 드립니다</span></div><Switch on={notify} onChange={(v) => (v ? setSheet("notify") : setNotify(false))} label="새 표본 알림" /></div>
           </section>
           <section className="set-sec glass">
-            <button type="button" className="set-row pressable" onClick={() => (kakao ? toast.show("이미 카카오에 보관되어 있습니다") : setSheet("kakao"))}><div><b>카카오 연결</b><span>{kakao ? "열쇠가 카카오 계정에 보관되어 있습니다" : "연결하면 열쇠 링크 없이도 들어올 수 있습니다"}</span></div><em className={kakao ? "on" : undefined}>{kakao ? "연결됨" : "연결하기"}</em></button>
+            <button type="button" className="set-row pressable" onClick={async () => {
+              if (!kakao) return setSheet("kakao");
+              if (!live) return;
+              if (isFail(await updateLab(live.lab, live.key, { kakao: false }))) return toast.show("바꾸지 못했습니다. 잠시 뒤 다시 시도해 주세요");
+              setKakao(false); toast.show("카카오 연결을 끊었습니다");
+            }}><div><b>카카오 연결</b><span>{kakao ? "열쇠가 카카오 계정에 보관되어 있습니다. 누르면 연결을 끊습니다" : "연결하면 열쇠 링크 없이도 들어올 수 있습니다"}</span></div><em className={kakao ? "on" : undefined}>{kakao ? "연결됨" : "연결하기"}</em></button>
             <button type="button" className="set-row pressable" onClick={() => copy(live ? `${origin}/b?lab=${live.lab}&key=${live.key}` : `${origin}/b`, "열쇠 링크를 복사했습니다")}><div><b>연구소 열쇠 복사</b><span>나만 보는 비밀 링크입니다</span></div><Icon name="copy" size={20} /></button>
             <button type="button" className="set-row pressable" onClick={() => setSheet("invite")}><div><b>초대 링크 보내기</b><span>친구에게 보내는 링크입니다</span></div><Icon name="export" size={20} /></button>
           </section>
@@ -622,23 +631,19 @@ export function BFlow() {
       {/* B-10 카카오 연결 권유 */}
       <BottomSheet open={sheet === "kakao"} onClose={() => setSheet(null)} title="열쇠를 카카오에 보관할까요?" desc="로그인이 없어서 열쇠 링크를 잃어버리면 연구소에 다시 들어올 수 없습니다. 카카오에 연결해 두면 언제든 다시 열 수 있어요."
         actions={<>
-          <button type="button" className="kakao-btn pressable" onClick={() => { setKakao(true); setSheet(null); toast.show("카카오에 열쇠를 보관했습니다"); }}>카카오로 연결하기</button>
+          <button type="button" className="kakao-btn pressable" onClick={() => {
+            if (!live) { setSheet(null); return toast.show("예시 화면에서는 연결할 수 없습니다"); }
+            location.assign(`/api/kakao/login?lab=${live.lab}&key=${live.key}`);
+          }}>카카오로 연결하기</button>
           <TextButton size="sm" onClick={() => setSheet(null)}>나중에 할게요</TextButton>
         </>}>
-        <ul className="sheet-list"><li>친구들에게는 보이지 않습니다</li><li>카카오 계정으로 어느 기기에서든 열 수 있습니다</li><li>연결은 설정에서 언제든 끊을 수 있습니다</li></ul>
-      </BottomSheet>
-      {/* B-11 알림 켜기 */}
-      <BottomSheet open={sheet === "notify"} onClose={() => setSheet(null)} title="새 표본이 오면 알려 드릴까요?" desc="친구가 답을 부으면 바로 알림을 보내 드립니다. 하루에 한 번 이상은 묶어서 보내요."
-        actions={<>
-          <Button block onClick={() => { setNotify(true); setSheet(null); toast.show("새 표본 알림을 켰습니다"); }}>알림 켜기</Button>
-          <TextButton size="sm" onClick={() => setSheet(null)}>괜찮아요</TextButton>
-        </>}>
-        <div className="notify-prev glass"><i style={{ background: mixed }} /><div><b>KAEHAE</b><span>{list[0]?.name ?? "수진"}님이 {name}님의 플라스크에 색을 부었습니다</span></div><em>지금</em></div>
+        <ul className="sheet-list"><li>카카오에서는 회원번호만 받습니다. 이름·프로필·친구 목록은 받지 않습니다</li><li>카카오 계정으로 어느 기기에서든 연구소를 다시 열 수 있습니다</li><li>연결은 설정에서 언제든 끊을 수 있습니다</li></ul>
       </BottomSheet>
       {/* 초대 링크 */}
       <BottomSheet open={sheet === "invite"} onClose={() => setSheet(null)} title="친구 초대하기" desc={open ? "링크를 받은 친구는 로그인 없이 바로 참여할 수 있습니다." : "지금은 응답을 마감한 상태입니다. 설정에서 다시 열 수 있어요."}
         actions={<Button block variant="assistive" onClick={() => setSheet(null)}>닫기</Button>}>
         <div className="link-box glass"><div className="lb-row"><code>{inviteUrl.replace(/^https?:\/\//, "")}</code><button type="button" className="pressable" aria-label="초대 링크 복사" onClick={() => copy(inviteUrl, "초대 링크를 복사했습니다")}><Icon name="copy" size={20} /></button></div></div>
+        {kakaoShareReady() ? <button type="button" className="kakao-btn pressable" onClick={async () => { if (!(await shareInviteToKakao(name, inviteUrl))) toast.show("카카오톡을 열지 못했습니다"); }}>카카오톡으로 보내기</button> : null}
       </BottomSheet>
       <Modal open={confirmDel} onClose={() => setConfirmDel(false)} title="연구소를 삭제할까요?" desc={`표본 ${n}개와 리포트가 모두 사라지고 되돌릴 수 없습니다.`}
         actions={<>

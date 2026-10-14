@@ -1,7 +1,9 @@
+import { connection } from "next/server";
 import { hasSupabase } from "@/lib/server/db-supabase";
 
 /** 저장소 연결 상태 점검. 어떤 저장소를 쓰는지와, Supabase라면 접속이 되는지만 알려 준다(키 값은 내보내지 않는다). */
 export async function GET() {
+  await connection(); // 빌드 때 만든 답을 쓰지 않고 요청마다 새로 확인한다
   if (!hasSupabase()) return Response.json({ store: "file", ok: !process.env.VERCEL, note: process.env.VERCEL ? "SUPABASE_URL 또는 SUPABASE_SERVICE_ROLE_KEY 환경 변수가 없습니다" : "개발용 파일 저장소" });
   try {
     const raw = process.env.SUPABASE_SERVICE_ROLE_KEY!;
