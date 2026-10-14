@@ -3,8 +3,9 @@ import type { DB, Lab, LabPatch } from "./db";
 
 /* 배포용 저장소: Supabase(Postgres)를 REST로 부른다. 표는 supabase/schema.sql 로 만든다.
    서비스 키는 서버에서만 쓰고 브라우저로 나가지 않는다. */
-const URL_ = process.env.SUPABASE_URL ?? "";
-const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+/* 붙여 넣다가 섞인 줄바꿈·공백·끝 슬래시는 걷어 낸다 */
+const URL_ = (process.env.SUPABASE_URL ?? "").trim().replace(/\/+$/, "");
+const KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? "").replace(/\s+/g, "");
 export const hasSupabase = () => !!URL_ && !!KEY;
 
 async function rest(path: string, init: RequestInit & { prefer?: string } = {}) {
@@ -13,7 +14,7 @@ async function rest(path: string, init: RequestInit & { prefer?: string } = {}) 
     cache: "no-store",
     headers: { apikey: KEY, Authorization: `Bearer ${KEY}`, "Content-Type": "application/json", ...(init.prefer ? { Prefer: init.prefer } : {}) },
   });
-  if (!res.ok) throw new Error(`supabase ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  if (!res.ok) throw new Error(`supabase ${res.status}`);
   return res;
 }
 const q = (v: string) => encodeURIComponent(v);
