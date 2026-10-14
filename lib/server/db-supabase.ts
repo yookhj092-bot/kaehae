@@ -52,6 +52,27 @@ export const supabaseDB: DB = {
     await rest(`samples?id=eq.${q(sid)}&lab_id=eq.${q(id)}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ data: { ...rows[0].data, taste } }) });
     return true;
   },
+  /* 아래 다섯 가지는 supabase/003_ops.sql 의 표(reports · rate · errors)를 쓴다 */
+  async addReport(labId, sampleId, reason, at) {
+    await rest("reports", { method: "POST", prefer: "return=minimal", body: JSON.stringify({ lab_id: labId, sample_id: sampleId, reason, at }) });
+  },
+  async hit(k, win) {
+    const rows = (await (await rest(`rate?k=eq.${q(k)}&select=n`)).json()) as { n: number }[];
+    const n = rows[0]?.n ?? 0;
+    await rest("rate?on_conflict=k", { method: "POST", prefer: "resolution=merge-duplicates,return=minimal", body: JSON.stringify({ k, n: n + 1, win }) });
+    return n;
+  },
+  async logError(at, path, message) {
+    await rest("errors", { method: "POST", prefer: "return=minimal", body: JSON.stringify({ at, path, message }) });
+  },
+  async stats(since) {
+    const count = async (p: string) => Number(((await rest(p, { method: "HEAD", prefer: "count=exact" })).headers.get("content-range") ?? "/0").split("/")[1]) || 0;
+    return { errors: await count(`errors?at=gte.${since}&select=id`), reports: await count("reports?select=id") };
+  },
+  async sweep(before) {
+    await rest(`rate?win=lt.${before}`, { method: "DELETE", prefer: "return=minimal" });
+    await rest(`errors?at=lt.${before - 29 * 86_400_000}`, { method: "DELETE", prefer: "return=minimal" });
+  },
   async purge(before) {
     const rows = (await (await rest(`labs?last_at=lt.${before}`, { method: "DELETE", prefer: "return=representation" })).json()) as unknown[];
     return rows.length;

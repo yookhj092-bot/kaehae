@@ -15,7 +15,7 @@ import { QDEFS, type QDef } from "./questions";
 import { mix } from "@/lib/color";
 import { expById, pad2 } from "@/lib/experiments";
 import { renderCard, renderStoryReport, shareCanvas, type CardKind } from "@/lib/shareImage";
-import { deleteLab, getLabFull, isFail, keySaved, markKeySaved, myLab, setMyLab, updateLab } from "@/lib/api";
+import { deleteLab, getLabFull, isFail, keySaved, reportSample, markKeySaved, myLab, setMyLab, updateLab } from "@/lib/api";
 import type { Sample } from "@/lib/types";
 import { RETENTION_DAYS } from "@/lib/site";
 import { kakaoShareReady, shareInviteToKakao } from "@/lib/kakao";
@@ -612,7 +612,12 @@ export function BFlow() {
       {/* B-09 숨기기 · 신고 */}
       <BottomSheet open={!!menu} onClose={() => setMenu(null)} title={menu?.step === "report" ? "신고 사유를 골라 주세요" : "이 답변을"} desc={menu?.step === "report" ? "신고한 답변은 바로 숨겨지고, 운영팀이 확인합니다." : target ? `${target.name}님의 한 줄 소견` : undefined}
         actions={menu?.step === "report"
-          ? <Button block disabled={menu.reason == null} onClick={() => { setHidden([...new Set([...hidden, menu.id])]); setMenu(null); toast.show("신고가 접수되었습니다"); }}>신고하기</Button>
+          ? <Button block disabled={menu.reason == null} onClick={async () => {
+              const { id, reason } = menu;
+              setHidden([...new Set([...hidden, id])]); setMenu(null);
+              const sent = live ? !isFail(await reportSample(live.lab, live.key, id, reason ?? 4)) : true;
+              toast.show(sent ? "신고가 접수되었습니다" : "답변은 숨겼지만 신고는 전달하지 못했습니다. 잠시 뒤 다시 시도해 주세요");
+            }}>신고하기</Button>
           : <Button block variant="assistive" onClick={() => setMenu(null)}>닫기</Button>}>
         {menu?.step === "report"
           ? REPORT_REASONS.map((l, i) => <Selection key={l} variant="list" label={l} active={menu.reason === i} onClick={() => setMenu({ ...menu, reason: i })} />)

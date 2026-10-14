@@ -119,7 +119,7 @@ export function AFlow() {
       return go("key");
     }
     const made = await createLab(body);
-    if (isFail(made)) { toast.show(made.error === "profanity" ? "이름에 쓸 수 없는 표현이 있습니다" : "연구소를 만들지 못했습니다. 잠시 뒤 다시 시도해 주세요"); return go(made.error === "profanity" ? "name" : "selfIntro"); }
+    if (isFail(made)) { toast.show(made.error === "profanity" ? "이름에 쓸 수 없는 표현이 있습니다" : made.error === "busy" ? "연구소를 너무 자주 만들었습니다. 한 시간 뒤 다시 시도해 주세요" : "연구소를 만들지 못했습니다. 잠시 뒤 다시 시도해 주세요"); return go(made.error === "profanity" ? "name" : "selfIntro"); }
     setIds({ lab: made.id, key: made.key });
     setMyLab({ lab: made.id, key: made.key, name: body.name });
     go("key");

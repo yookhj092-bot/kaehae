@@ -249,7 +249,7 @@ export function RFlow() {
     });
     if (isFail(r)) {
       if (r.error === "closed") { location.replace(`/e?k=closed&name=${encodeURIComponent(SUBJECT)}`); return false; }
-      toast.show(r.error === "network" ? "연결이 불안정합니다. 다시 눌러 주세요" : r.error === "profanity" ? "답변에 제출할 수 없는 표현이 있습니다. 고친 뒤 다시 시도해 주세요" : "제출하지 못했습니다. 다시 눌러 주세요");
+      toast.show(r.error === "network" ? "연결이 불안정합니다. 다시 눌러 주세요" : r.error === "busy" ? "요청이 너무 많습니다. 잠시 뒤 다시 눌러 주세요" : r.error === "profanity" ? "답변에 제출할 수 없는 표현이 있습니다. 고친 뒤 다시 시도해 주세요" : "제출하지 못했습니다. 다시 눌러 주세요");
       return false;
     }
     setSample(r);

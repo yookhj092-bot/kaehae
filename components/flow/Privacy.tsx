@@ -9,7 +9,7 @@ import { OPERATOR, RETENTION_DAYS } from "@/lib/site";
 export function PrivacyLine({ onOpen }: { onOpen: () => void }) {
   return (
     <p className="privacy-line">
-      <button type="button" onClick={onOpen}>개인정보 처리 안내</button>
+      만 14세 이상 이용 · <button type="button" onClick={onOpen}>개인정보 처리 안내</button>
     </p>
   );
 }
@@ -28,7 +28,7 @@ export function PrivacySheet({ open, onClose, role }: { open: boolean; onClose: 
         <div><dt>보관 기간</dt><dd>마지막 표본이 들어온 뒤 {RETENTION_DAYS}일이 지나면 연구소와 모든 답을 자동으로 지웁니다. 주인이 그 전에 삭제할 수도 있습니다.</dd></div>
         <div><dt>삭제 요청</dt><dd>{OPERATOR.email ? `${OPERATOR.email} 로 요청하시면 지워 드립니다.` : "문의처는 정식 공개 전에 안내됩니다."}</dd></div>
       </dl>
-      <p className="privacy-note">만 14세 미만은 이용할 수 없습니다. 답변에 다른 사람의 실명·연락처·주소 같은 개인정보는 적지 말아 주세요.</p>
+      <p className="privacy-note">만 14세 이상만 이용할 수 있습니다. 답변에 다른 사람의 실명·연락처·주소 같은 개인정보는 적지 말아 주세요.</p>
     </BottomSheet>
   );
 }

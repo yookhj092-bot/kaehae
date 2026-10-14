@@ -2,7 +2,7 @@ import type { LabCreate, LabFull, LabPublic } from "@/lib/types";
 
 /* 브라우저에서 부르는 저장소 요청 */
 const json = (body: unknown): RequestInit => ({ headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-export type Fail = { error: "notfound" | "nokey" | "closed" | "full" | "invalid" | "profanity" | "network" };
+export type Fail = { error: "notfound" | "nokey" | "closed" | "full" | "invalid" | "profanity" | "busy" | "server" | "network" };
 async function call<T>(url: string, init?: RequestInit): Promise<T | Fail> {
   try {
     const res = await fetch(url, { cache: "no-store", ...init });
@@ -18,6 +18,7 @@ export const getLabFull = (id: string, key: string) => call<LabFull>(`/api/labs/
 export const updateLab = (id: string, key: string, v: Record<string, unknown>) => call<{ ok: true }>(`/api/labs/${id}?key=${encodeURIComponent(key)}`, { method: "PATCH", ...json(v) });
 export const deleteLab = (id: string, key: string) => call<{ ok: true }>(`/api/labs/${id}?key=${encodeURIComponent(key)}`, { method: "DELETE" });
 export const submitSample = (id: string, v: Record<string, unknown>) => call<{ id: string; count: number }>(`/api/labs/${id}/responses`, { method: "POST", ...json(v) });
+export const reportSample = (id: string, key: string, sample: string, reason: number) => call<{ ok: true }>(`/api/labs/${id}/reports?key=${encodeURIComponent(key)}`, { method: "POST", ...json({ sample, reason }) });
 export const submitTaste = (id: string, sid: string, taste: (number | null)[]) => call<{ ok: true }>(`/api/labs/${id}/responses/${sid}`, { method: "PATCH", ...json({ taste }) });
 
 /** 이 기기에서 만든 연구소 (열쇠 보관) */

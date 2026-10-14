@@ -1,5 +1,6 @@
 import { connection } from "next/server";
 import { hasSupabase } from "@/lib/server/db-supabase";
+import { opsStats } from "@/lib/server/store";
 
 /** 저장소 연결 상태 점검. 어떤 저장소를 쓰는지와, Supabase라면 접속이 되는지만 알려 준다(키 값은 내보내지 않는다). */
 export async function GET() {
@@ -10,7 +11,8 @@ export async function GET() {
     const key = raw.replace(/\s+/g, "");
     const res = await fetch(`${process.env.SUPABASE_URL!.trim().replace(/\/+$/, "")}/rest/v1/labs?select=id&limit=1`, { cache: "no-store", headers: { apikey: key, Authorization: `Bearer ${key}` } });
     const body = res.ok ? null : ((await res.json().catch(() => ({}))) as { code?: string; message?: string });
-    return Response.json({ store: "supabase", ok: res.ok, status: res.status, code: body?.code, message: body?.code ? `Supabase 오류 ${body.code}` : undefined, keyHadSpaces: raw !== key, keyKind: key.startsWith("sb_secret_") ? "secret" : key.startsWith("sb_publishable_") ? "publishable" : key.startsWith("eyJ") ? "legacy-jwt" : "unknown" });
+    const ops = res.ok ? await opsStats() : null; // 003_ops.sql 을 아직 실행하지 않았으면 null
+    return Response.json({ store: "supabase", ok: res.ok, status: res.status, opsTables: !!ops, errors24h: ops?.errors, reports: ops?.reports, code: body?.code, message: body?.code ? `Supabase 오류 ${body.code}` : undefined, keyHadSpaces: raw !== key, keyKind: key.startsWith("sb_secret_") ? "secret" : key.startsWith("sb_publishable_") ? "publishable" : key.startsWith("eyJ") ? "legacy-jwt" : "unknown" });
   } catch (e) {
     /* 오류 문구에는 키 값이 섞여 나올 수 있어서 내보내지 않는다 */
     void e;

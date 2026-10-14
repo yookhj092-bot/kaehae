@@ -1,4 +1,4 @@
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { anyBad, isBad } from "@/lib/moderation";
 import { RETENTION_DAYS } from "@/lib/site";
 import type { LabCreate, LabFull, LabPublic, Sample, SelfAnswers } from "@/lib/types";
@@ -107,5 +107,37 @@ export async function setTaste(id: string, sid: string, taste: unknown) {
   return db.setTaste(id, sid, [0, 1, 2, 3, 4].map((i) => int(taste[i], 0, 9)));
 }
 /** 기한이 지난 연구소를 모두 지운다 (정기 실행용) */
-export const purgeExpired = () => db.purge(Date.now() - RETENTION_DAYS * DAY);
+export async function purgeExpired() {
+  const removed = await db.purge(Date.now() - RETENTION_DAYS * DAY);
+  await db.sweep(Date.now() - DAY).catch(() => {});
+  return removed;
+}
+
+/* ---------- 신고 · 남용 방지 · 오류 기록 ---------- */
+export const REPORT_REASONS = 5;
+/** 주인이 받은 답을 운영자에게 신고한다 */
+export async function addReport(id: string, key: string, v: Record<string, unknown>) {
+  const l = await alive(id);
+  if (!l || l.key !== key) return false;
+  const sid = str(v.sample, 12), reason = int(v.reason, 0, REPORT_REASONS - 1);
+  if (reason == null || !l.samples.some((s) => s.id === sid)) return false;
+  await db.addReport(id, sid, String(reason), Date.now());
+  return true;
+}
+/** 같은 접속 주소에서 windowMs 동안 limit번까지만 허용한다. 주소는 알아볼 수 없게 바꿔서 센다.
+    횟수 표가 아직 없거나 저장소가 응답하지 않으면 막지 않고 통과시킨다. */
+export async function rateOk(ip: string, kind: string, limit: number, windowMs: number) {
+  try {
+    const win = Math.floor(Date.now() / windowMs) * windowMs;
+    const who = createHash("sha256").update(`${ip}|${process.env.CRON_SECRET ?? "kaehae"}`).digest("hex").slice(0, 20);
+    return (await db.hit(`${kind}:${who}:${win}`, win)) < limit;
+  } catch { return true; }
+}
+/** 서버 오류를 남긴다. 열쇠처럼 보이는 긴 문자열은 지우고 앞부분만 적는다. */
+export async function logError(path: string, err: unknown) {
+  const raw = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+  const message = raw.replace(/sb_[a-z]+_[\w-]+/g, "[key]").replace(/[\w-]{24,}/g, "[…]").slice(0, 200);
+  await db.logError(Date.now(), path.split("?")[0].replace(/\/labs\/[^/]+/, "/labs/:id").slice(0, 80), message).catch(() => {});
+}
+export const opsStats = () => db.stats(Date.now() - DAY).catch(() => null);
 
