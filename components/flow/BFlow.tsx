@@ -18,7 +18,7 @@ import { renderCard, renderStoryReport, shareCanvas, type CardKind } from "@/lib
 import { deleteLab, getLabFull, isFail, keySaved, reportSample, markKeySaved, myLab, setMyLab, updateLab } from "@/lib/api";
 import type { Sample } from "@/lib/types";
 import { RETENTION_DAYS } from "@/lib/site";
-import { kakaoShareReady, shareInviteToKakao } from "@/lib/kakao";
+import { kakaoShareReady, preloadKakao, shareInviteToKakao } from "@/lib/kakao";
 import { setTrackCtx, track } from "@/lib/track";
 import { DEMO_SELF, demoSamples, INGREDIENTS, SEASONS, TASTE, TEXTURES, VIS, ZOMBIE, ago, avg, tally, type Self } from "./reportData";
 
@@ -93,6 +93,7 @@ export function BFlow() {
       try { const raw = localStorage.getItem(`kaehae-seen-${l.lab}`); if (raw != null) s = Math.min(d.samples.length, Number(raw) || 0); else localStorage.setItem(`kaehae-seen-${l.lab}`, String(s)); } catch {}
       setSeen(s);
       setKeyKept(keySaved(l.lab));
+      preloadKakao();
       setTrackCtx({ role: "b", lab: l.lab }); track("b_view", { n: d.samples.length });
       setReady(true);
     }

@@ -17,7 +17,7 @@ import { renderStoryInvite, shareCanvas } from "@/lib/shareImage";
 import { createLab, getLab, isFail, markKeySaved, myLab, setMyLab, updateLab } from "@/lib/api";
 import { BAD_MSG, isBad } from "@/lib/moderation";
 import { RETENTION_DAYS } from "@/lib/site";
-import { kakaoShareReady, shareInviteToKakao } from "@/lib/kakao";
+import { kakaoShareReady, preloadKakao, shareInviteToKakao } from "@/lib/kakao";
 import { setTrackCtx, track } from "@/lib/track";
 import { PrivacyLine, PrivacySheet } from "./Privacy";
 
@@ -48,6 +48,7 @@ export function AFlow() {
   const [selfOn, setSelfOn] = useState(false);
   const [share, setShare] = useState(false);
   const heroRef = useHeroFit(step);
+  useEffect(() => { if (step === "key") preloadKakao(); }, [step]);
   const [keyKept, setKeyKept] = useState(false); // 열쇠 링크를 보관했는지
   const [keyFail, setKeyFail] = useState(false); // 복사가 막힌 브라우저
   const [privacy, setPrivacy] = useState(false);
