@@ -62,7 +62,7 @@ export async function getLab(id: string, key?: string | null): Promise<{ lab: La
   /* 익명을 고른 연구원의 이름은 주인에게도 보내지 않는다 */
   let k = 0;
   const samples = l.samples.map((s) => (s.vis === 2 ? { ...s, name: `익명의 연구원 #${++k}`, anon: true } : s));
-  return { lab: { ...pub(l), samples, hidden: l.hidden, kakao: !!l.owner }, owner: true };
+  return { lab: { ...pub(l), samples, hidden: l.hidden }, owner: true };
 }
 export async function updateLab(id: string, key: string, v: Record<string, unknown>) {
   const l = await alive(id);
@@ -74,7 +74,6 @@ export async function updateLab(id: string, key: string, v: Record<string, unkno
   if (typeof v.rotB === "string" && ROT_B.includes(v.rotB)) p.rotB = v.rotB;
   if (Array.isArray(v.hidden)) p.hidden = v.hidden.filter((x) => typeof x === "string").slice(0, 500) as string[];
   if ("self" in v) p.self = cleanSelf(v.self);
-  if (v.kakao === false) p.owner = null; // 카카오 연결 끊기
   await db.patch(id, p);
   return true;
 }
@@ -110,16 +109,3 @@ export async function setTaste(id: string, sid: string, taste: unknown) {
 /** 기한이 지난 연구소를 모두 지운다 (정기 실행용) */
 export const purgeExpired = () => db.purge(Date.now() - RETENTION_DAYS * DAY);
 
-/* ---------- 카카오 열쇠 보관 ---------- */
-/** 열쇠가 맞으면 이 연구소를 카카오 회원번호에 묶는다 */
-export async function linkOwner(id: string, key: string, owner: string) {
-  const l = await alive(id);
-  if (!l || l.key !== key) return false;
-  await db.patch(id, { owner });
-  return true;
-}
-/** 이 카카오 회원이 보관한 연구소 중 가장 최근에 활동한 것 */
-export async function findByOwner(owner: string): Promise<{ id: string; key: string } | null> {
-  const labs = (await db.byOwner(owner)).filter((l) => Date.now() <= expiresAt(l)).sort((a, b) => expiresAt(b) - expiresAt(a));
-  return labs[0] ? { id: labs[0].id, key: labs[0].key } : null;
-}

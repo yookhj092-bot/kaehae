@@ -27,7 +27,6 @@ export const fileDB: DB = {
   create: (lab) => tx((db) => { db.labs[lab.id] = lab; }),
   patch: (id, patch) => tx((db) => { if (db.labs[id]) Object.assign(db.labs[id], patch); }),
   remove: (id) => tx((db) => { delete db.labs[id]; }),
-  byOwner: async (owner) => Object.values((await load()).labs).filter((l) => l.owner === owner),
   addSample: (id, s) => tx((db) => { db.labs[id]?.samples.push(s); }),
   setTaste: (id, sid, taste) => tx((db) => { const s = db.labs[id]?.samples.find((x) => x.id === sid); if (!s) return false; s.taste = taste; return true; }),
   purge: (before) => tx((db) => { let n = 0; for (const [id, l] of Object.entries(db.labs)) if (lastAt(l) < before) { delete db.labs[id]; n++; } return n; }),

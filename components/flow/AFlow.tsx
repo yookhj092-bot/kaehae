@@ -285,7 +285,6 @@ export function AFlow() {
             <div className="lb-head"><b>연구소 열쇠</b><span>나만 보는 비밀 링크</span></div>
             <div className="lb-row"><code>{keyUrl.replace(/^https?:\/\//, "")}</code><button type="button" className="pressable" aria-label="열쇠 링크 복사" onClick={() => copy(keyUrl, "열쇠 링크를 복사했습니다")}><Icon name="copy" size={20} /></button></div>
             <p>로그인이 없어서, 이 링크가 있어야 리포트를 다시 열 수 있습니다. 꼭 보관해 주세요. 마지막 표본이 들어온 뒤 {RETENTION_DAYS}일이 지나면 연구소는 자동으로 지워집니다.</p>
-            <TextButton size="sm" onClick={() => location.assign(`/api/kakao/login?lab=${ids.lab}&key=${ids.key}`)}>카카오로 열쇠 보관하기</TextButton>
           </div>
         </div>
         <div className="scr-bottom">

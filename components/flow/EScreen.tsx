@@ -22,8 +22,6 @@ export function EScreen({ kind: fixed }: { kind?: EKind }) {
     const q = new URLSearchParams(location.search);
     if (q.get("name")) setSubject(q.get("name")!.slice(0, 12));
     setLab(q.get("lab"));
-    const kk = q.get("kakao");
-    if (kk) setTimeout(() => toast.show(kk === "none" ? "이 카카오 계정에 보관된 연구소가 없습니다" : kk === "off" ? "카카오 연결은 아직 준비 중입니다" : kk === "cancel" ? "카카오 연결을 취소했습니다" : "카카오 연결에 실패했습니다. 다시 시도해 주세요"), 400);
     const k = q.get("k") as EKind | null;
     if (k && KINDS.includes(k)) setKind(k);
   }, [fixed]);
@@ -71,7 +69,6 @@ export function EScreen({ kind: fixed }: { kind?: EKind }) {
         </form>
       ),
       main: <Button block disabled={!key.trim()} onClick={openKey} className="sheen">연구소 열기</Button>,
-      sub: <TextButton size="sm" onClick={to("/api/kakao/login")}>카카오로 열쇠 찾기</TextButton>,
     },
     offline: {
       mark: "!", title: <>연결이 잠시 끊겼습니다</>,

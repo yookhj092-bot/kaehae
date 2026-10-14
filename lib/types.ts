@@ -31,7 +31,5 @@ export type LabPublic = { id: string; name: string; rotA: string; rotB: string; 
   /** 이 시각이 지나면 연구소가 자동으로 지워진다 (마지막 표본 + 보관 기간) */
   expiresAt: number };
 /** 열쇠로 들어온 주인이 보는 연구소 정보 */
-export type LabFull = LabPublic & { samples: Sample[]; hidden: string[];
-  /** 열쇠가 카카오 계정에 보관되어 있는지 */
-  kakao: boolean };
+export type LabFull = LabPublic & { samples: Sample[]; hidden: string[]; };
 export type LabCreate = { name: string; rotA: string; rotB: string; rel: boolean; self: SelfAnswers | null };
