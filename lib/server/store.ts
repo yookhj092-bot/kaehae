@@ -149,6 +149,8 @@ export async function addEvent(v: Record<string, unknown>) {
     if (!/^[a-z]{1,10}$/.test(k)) continue;
     if (typeof x === "number" && Number.isFinite(x)) meta[k] = x; else if (typeof x === "string") meta[k] = x.slice(0, 24);
   }
+  const src = str(v.src, 16); // 유입 채널 (lib/track.ts). 위 4개 제한과 따로 둔다
+  if (/^[a-z0-9_-]{1,16}$/.test(src)) meta.src = src;
   const lab = str(v.lab, 12) || null;
   await db.addEvent({ at: Date.now(), kind, role, lab: lab && /^[a-z0-9]+$/.test(lab) ? lab : null, dev, meta });
 }

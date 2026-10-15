@@ -20,6 +20,10 @@ const STEP_NAME: Record<string, string> = {
   intro10: "10 관계 데이터", word: "10 한 단어", secret: "10 비밀", intro11: "11 연구 소견", opinion: "11 소견", charm: "11 매력", vis: "공개 범위",
   pour: "붓기", done: "접수증", intro9: "보너스 안내", sync: "싱크로율",
 };
+const SRC_NAME: Record<string, string> = {
+  li: "링크드인", x: "X", ig: "인스타그램", threads: "스레드", fb: "페이스북", kakao: "카카오톡", disquiet: "디스콰이엇", geeknews: "GeekNews",
+  search: "검색", etc: "기타 사이트", none: "표시 없음 (직접·친구 초대)",
+};
 const CH_NAME: Record<string, string> = { copy: "링크 복사", kakao: "카카오톡", native: "기기 공유", "invite-story": "스토리 이미지", sync: "싱크로율 이미지" };
 
 export default function Admin() {
@@ -91,6 +95,18 @@ export default function Admin() {
           </div>
         </section>
 
+        <section className="adm-card">
+          <h2>유입 채널 (기기가 처음 들어온 경로 기준)</h2>
+          <div className="adm-scroll">
+            <table className="adm-table">
+              <thead><tr><th>채널</th><th className="n">방문 기기</th><th className="n">초대 링크 방문</th><th className="n">응답 제출</th><th className="n">연구소 만든 기기</th></tr></thead>
+              <tbody>{s.sources.map((r) => (
+                <tr key={r.src}><td>{SRC_NAME[r.src] ?? r.src}</td><td className="n">{r.visitors}</td><td className="n">{r.rVisitors}</td><td className="n">{r.submitted}</td><td className="n">{r.makers}</td></tr>
+              ))}</tbody>
+            </table>
+          </div>
+        </section>
+
         <div className="adm-grid2">
           <section className="adm-card"><h2>응답 흐름 (초대 링크를 연 사람 기준)</h2><Bars rows={s.rFunnel} /></section>
           <section className="adm-card"><h2>만들기 흐름 (첫 화면을 연 기기 기준)</h2><Bars rows={s.aFunnel} /></section>
@@ -112,6 +128,7 @@ export default function Admin() {
 
         <ul className="adm-note">
           <li>방문·공유·흐름·그만둔 곳은 통계 수집을 켠 뒤부터 쌓입니다. 그 전에 만든 연구소와 응답은 목록과 합계에만 들어갑니다.</li>
+          <li>유입 채널은 링크 뒤의 ?ref= 표시(예: ?ref=li)를 먼저 보고, 없으면 이전 사이트 주소로 짐작합니다. 이 기능을 넣기 전 기록과 카카오톡처럼 주소를 넘기지 않는 앱에서 표시 없이 들어온 방문은 &apos;표시 없음&apos;으로 셉니다.</li>
           <li>사람 수는 기기 기준입니다. 같은 사람이 휴대폰과 컴퓨터로 들어오면 두 명으로 셉니다.</li>
           <li>연구소는 마지막 응답 30일 뒤 지워지지만, 통계 기록은 90일 동안 남아 &apos;삭제됨&apos;으로 보입니다.</li>
           <li>내 기기로 시험한 기록이 섞이지 않게, 쓰는 기기마다 이 화면에서 &apos;이 기기 통계에서 빼기&apos;를 눌러 두세요.</li>
@@ -212,6 +229,22 @@ function analyze({ labs, events }: Dump, range: number) {
     return { id, name: l.name, createdAt: l.createdAt, n: mine.length, bonus: live ? live.samples.filter((x) => x.bonus).length : 0, shares: shareByLab.get(id) ?? 0, last: mine.length ? Math.max(...mine.map((x) => x.at)) : 0, state: l.open == null ? "삭제됨" : l.open ? (keySaved.has(id) ? "응답 받는 중" : "응답 받는 중 · 열쇠 미보관") : "마감" };
   }).sort((a, b) => b.createdAt - a.createdAt);
 
+  /* 유입 채널: 기기마다 채널 표시가 붙은 가장 이른 기록을 그 기기의 경로로 본다 */
+  const devSrc = new Map<string, { at: number; src: string }>();
+  for (const e of events) if (e.meta.src) { const p = devSrc.get(e.dev); if (!p || e.at < p.at) devSrc.set(e.dev, { at: e.at, src: String(e.meta.src) }); }
+  const srcOf = (dev: string) => devSrc.get(dev)?.src ?? "none";
+  const bySrc = new Map<string, { visitors: Set<string>; rVisitors: Set<string>; submitted: Set<string>; makers: Set<string> }>();
+  const bucket = (dev: string) => { const k = srcOf(dev); let b = bySrc.get(k); if (!b) bySrc.set(k, (b = { visitors: new Set(), rVisitors: new Set(), submitted: new Set(), makers: new Set() })); return b; };
+  for (const e of events) {
+    const b = bucket(e.dev);
+    b.visitors.add(e.dev);
+    if (e.role === "r" && e.kind === "step") b.rVisitors.add(pair(e));
+    if (e.kind === "submit") b.submitted.add(pair(e));
+    if (e.kind === "lab_created") b.makers.add(e.dev);
+  }
+  const sources = [...bySrc.entries()].map(([src, b]) => ({ src, visitors: b.visitors.size, rVisitors: b.rVisitors.size, submitted: b.submitted.size, makers: b.makers.size }))
+    .sort((a, b) => (a.src === "none" ? 1 : b.src === "none" ? -1 : b.visitors - a.visitors));
+
   const allDevs = new Set(events.map((e) => e.dev));
   return {
     labs: labMap.size, labsWithResp: new Set([...resp.values()].map((x) => x.lab)).size, responses: resp.size,
@@ -228,6 +261,6 @@ function analyze({ labs, events }: Dump, range: number) {
     ],
     channels: [...ch.entries()].sort((a, b) => b[1] - a[1]).map(([c, n]) => ({ label: CH_NAME[c] ?? c, n })),
     drop: [...dropCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([st, n]) => ({ label: STEP_NAME[st] ?? st, n })),
-    daily, labRows,
+    daily, labRows, sources,
   };
 }
